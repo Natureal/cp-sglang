@@ -168,9 +168,11 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
                 invalid_addr.add(addresses[k])
                 continue
             features.append((*[self.deltas[i][addresses[k]] for i in range(self.delta_nums)], *[self.edcs[i][addresses[k]] for i in range(self.edc_nums)]))
-                            
+
         logger.info(f"features: {str(features)}")
-        preds = self._model(features)
+        preds = []
+        if len(features) > 0:
+            preds = self._model(features)
 
         idx = 0
         for k in range(len(addresses)):
