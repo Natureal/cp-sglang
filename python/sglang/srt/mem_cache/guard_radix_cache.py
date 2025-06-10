@@ -342,6 +342,7 @@ class GuardRadixCache(BasePrefixCache):
                     self._predict(unguarded_candidates)
                     # Choose node with maximum reuse distance (farthest reuse)
                     victim = max(unguarded_candidates, key=lambda node: node.pred)
+                    logger.info(f"victim pred = {victim.pred}")
 
             # Step 4: Perform eviction
             if victim and victim.value is not None:
