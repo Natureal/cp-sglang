@@ -24,7 +24,7 @@ from sglang.bench_serving import (
 )
 
 #request_rate_list = [16, 14, 12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
-request_rate_list = [1, 0.75, 0.5, 0.03, 0.02]
+request_rate_list = [0.5, 0.2, 0.1, 0.05, 0.01]
 request_rate_map = {}
 client_id_to_idx = {}
 idx_to_client_id = {}
@@ -363,7 +363,7 @@ class WorkloadGenerator:
                 #print(f"client_id: {current_client_id}, request_rate: {request_rate_map[current_client_id]}, corres idx: {idx}")
                 # Calculate Poisson-distributed wait time
                 if self.distribution == "poisson":
-                    sleep_time = random.expovariate(request_rate_map[current_client_id])
+                    sleep_time = random.expovariate(min(request_rate_map[current_client_id]), 100)
                 elif self.distribution == "uniform":
                     avg_interval = (
                         1.0 / request_rate_map[current_client_id] if request_rate_map[current_client_id]> 0 else 1.0
