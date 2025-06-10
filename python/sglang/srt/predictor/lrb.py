@@ -112,6 +112,7 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
 
     def access(self, address, current_ts):
         logger.info(f"feature num: {len(self.features)}")
+        logger.info(f"feature_history num: {len(self.feature_history)}")
         if address not in self.access_time_dict:
             self.access_time_dict[address] = collections.deque()
         elif (self.enable_online_training == "on") \
