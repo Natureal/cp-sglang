@@ -508,11 +508,13 @@ class GuardRadixCache(BasePrefixCache):
     def _predictor_feature_copy(self, key, new_key):
         self.predictor.feature_copy(hash(tuple(key)), hash(tuple(new_key)))
 
-    #def _predictor_spawn(self, node: TreeNode, new_node: TreeNode):
-        #self._predictor_feature_copy(node.key, new_node.key)
+    def _predictor_spawn(self, node: TreeNode, new_node: TreeNode):
+        if self.degrade_to_lru == True or self.waiting_queue_cache == True:
+            return
+        self._predictor_feature_copy(node.key, new_node.key)
         # copy pred from parent node
-        #new_node.pred_valid = node.pred_valid
-        #new_node.pred = node.pred
+        new_node.pred_valid = node.pred_valid
+        new_node.pred = node.pred
        # pass
 
     def _judge_evicted_in_phase(self, node: TreeNode):
@@ -563,7 +565,7 @@ class GuardRadixCache(BasePrefixCache):
             new_node.parent = node
             new_node.key = key
             new_node.value = value
-            #self._predictor_spawn(node, new_node)
+            self._predictor_spawn(node, new_node)
             # copy ts from parent node when spawning node
             new_node.last_access_ts = node.last_access_ts
 
