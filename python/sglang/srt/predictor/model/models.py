@@ -15,5 +15,5 @@ class LightGBMModel:
         return self.forward(features)
 
     def forward(self, features):
-        ypred = self.model_.predict(np.array([features], dtype=np.float64))
+        ypred = self.model_.predict(np.array(features, dtype=np.float64))
         return ypred
