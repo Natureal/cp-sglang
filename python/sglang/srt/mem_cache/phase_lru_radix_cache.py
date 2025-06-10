@@ -126,7 +126,9 @@ class PhaseLRURadixCache(BasePrefixCache):
         self.lru_budget = 0
         self.ts = 0
 
-        self.algo_type = "phaselru"
+        self.waiting_queue_cache = waiting_queue_cache
+
+        self.algo_type = "lru"
 
         #self.predictor = POPUPredictor()
         #self.predictor = PLECOPredictor()

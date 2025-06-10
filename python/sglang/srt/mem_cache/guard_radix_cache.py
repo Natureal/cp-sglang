@@ -93,9 +93,10 @@ class GuardRadixCache(BasePrefixCache):
         self.page_size = page_size
         self.disable = disable
 
+        self.waiting_queue_cache = waiting_queue_cache
+
         self.algo_type = "lru"
         self.degrade_to_lru = True
-        self.record_features = False
 
         #self.predictor = POPUPredictor()
         #self.predictor = LRUPredictor()
@@ -393,11 +394,9 @@ class GuardRadixCache(BasePrefixCache):
             self.algo_type = algo_type
             if algo_type == "lru":
                 self.degrade_to_lru = True
-                self.record_features = False
                 logger.info(f"Caching algorithm switches from guard to lru")
             elif algo_type == "guard":
                 self.degrade_to_lru = False
-                self.record_features = True
                 logger.info(f"Caching algorithm switches from lru to guard")
         else:
             logger.info(f"Caching algorithm is already {self.algo_type}")
@@ -475,7 +474,7 @@ class GuardRadixCache(BasePrefixCache):
         return new_node
     
     def _predictor_access(self, node: TreeNode, current_ts):
-        if self.record_features == False:
+        if self.degrade_to_lru == True or self.waiting_queue_cache == True:
             return
         #logger.info(f"pred access key = {hash(tuple(node.key))}")
         self.predictor.access(hash(tuple(node.key)), current_ts)
@@ -489,7 +488,7 @@ class GuardRadixCache(BasePrefixCache):
         #    logger.info(f"---------------------------------------------------- tree structure: {captured}")
 
     def _predictor_split(self, original_key, node: TreeNode, new_node: TreeNode):
-        if self.record_features == False:
+        if self.degrade_to_lru == True or self.waiting_queue_cache == True:
             return
         self._predictor_feature_copy(original_key, node.key)
         self._predictor_feature_copy(original_key, new_node.key)
