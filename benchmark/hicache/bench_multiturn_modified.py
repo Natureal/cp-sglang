@@ -363,7 +363,7 @@ class WorkloadGenerator:
                 #print(f"client_id: {current_client_id}, request_rate: {request_rate_map[current_client_id]}, corres idx: {idx}")
                 # Calculate Poisson-distributed wait time
                 if self.distribution == "poisson":
-                    sleep_time = random.expovariate(min(request_rate_map[current_client_id]), 30)
+                    sleep_time = random.expovariate(min(request_rate_map[current_client_id], 30))
                 elif self.distribution == "uniform":
                     avg_interval = (
                         1.0 / request_rate_map[current_client_id] if request_rate_map[current_client_id]> 0 else 1.0
