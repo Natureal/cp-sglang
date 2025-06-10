@@ -111,8 +111,8 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
             self.feature_history[new_address] = [*[self.deltas[i][new_address] for i in range(self.delta_nums)], *[self.edcs[i][new_address] for i in range(self.edc_nums)]]
 
     def access(self, address, current_ts):
-        logger.info(f"feature num: {len(self.features)}")
-        logger.info(f"feature_history num: {len(self.feature_history)}")
+        #logger.info(f"feature num: {len(self.features)}")
+        #logger.info(f"feature_history num: {len(self.feature_history)}")
         if address not in self.access_time_dict:
             self.access_time_dict[address] = collections.deque()
         elif (self.enable_online_training == "on") \
@@ -166,7 +166,7 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
         #logger.info(f"pred init result: {str(pred)}")
         pred = np.expm1(pred)
         #logger.info(f"pred final result: {str(pred)}")
-        #logger.info(f"pred = {str(pred)}, features: {str((*[self.deltas[i][address] for i in range(self.delta_nums)], *[self.edcs[i][address] for i in range(self.edc_nums)]))}")
+        logger.info(f"pred = {str(pred)}, features: {str((*[self.deltas[i][address] for i in range(self.delta_nums)], *[self.edcs[i][address] for i in range(self.edc_nums)]))}")
         return pred[0]
 
 
