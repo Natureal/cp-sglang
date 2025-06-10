@@ -565,7 +565,7 @@ class GuardRadixCache(BasePrefixCache):
             new_node.parent = node
             new_node.key = key
             new_node.value = value
-            self._predictor_spawn(node, new_node)
+            #self._predictor_spawn(node, new_node)
             # copy ts from parent node when spawning node
             new_node.last_access_ts = node.last_access_ts
 
