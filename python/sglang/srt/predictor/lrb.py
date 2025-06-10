@@ -159,15 +159,17 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
         self.feature_history[address] = [*[self.deltas[i][address] for i in range(self.delta_nums)], *[self.edcs[i][address] for i in range(self.edc_nums)]]
         # ------------------- update features ends ----------------------------
 
-    def predict(self, address):
-        if (address not in self.access_time_dict) or len(self.access_time_dict[address]) == 1:
-            return 2**62
-        pred = self._model((*[self.deltas[i][address] for i in range(self.delta_nums)], *[self.edcs[i][address] for i in range(self.edc_nums)]))
+    def predict(self, addresses):
+        preds = self._model([(*[self.deltas[i][addresses[k]] for i in range(self.delta_nums)], *[self.edcs[i][addresses[k]] for i in range(self.edc_nums)])] for k in range(len(addresses)))
+        for k in range(len(addresses)):
+            if addresses[k] not in self.access_time_dict or len(self.access_time_dict[addresses[k]]) == 1:
+                preds[k] = 2**62
+            else:
+                preds[k] = np.expm1(preds[k])
+                logger.info(f"pred = {str(preds[k])}, features: {str((*[self.deltas[i][addresses[k]] for i in range(self.delta_nums)], *[self.edcs[i][addresses[k]] for i in range(self.edc_nums)]))}")
         #logger.info(f"pred init result: {str(pred)}")
-        pred = np.expm1(pred)
         #logger.info(f"pred final result: {str(pred)}")
-        logger.info(f"pred = {str(pred)}, features: {str((*[self.deltas[i][address] for i in range(self.delta_nums)], *[self.edcs[i][address] for i in range(self.edc_nums)]))}")
-        return pred[0]
+        return preds
 
 
 class LRBBinaryPredictor(BinaryPredictor):

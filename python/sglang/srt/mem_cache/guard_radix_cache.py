@@ -143,10 +143,18 @@ class GuardRadixCache(BasePrefixCache):
         self.current_request_key = None
     
     def _predict(self, nodes: List[TreeNode]):
+        node_to_pred = []
+        addresses = []
         for node in nodes:
             if node.pred_valid == 0:
-                node.pred = node.last_access_ts + self.predictor.predict(hash(tuple(node.key)))
-                node.pred_valid = 1
+                node_to_pred.append(node)
+                addresses.append(hash(tuple(node.key)))
+    
+        preds = self.predictor.predict(addresses)
+        for i in range(len(node_to_pred)):
+            node = node_to_pred[i]
+            node.pred = node.last_access_ts + preds[i]
+            node.pred_valid = 1
 
     def _dummy_predictor(self, nodes: List[TreeNode]) -> dict:
         """Dummy predictor that returns random reuse distances for Belady algorithm.
