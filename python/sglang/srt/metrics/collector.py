@@ -138,6 +138,12 @@ class SchedulerStats:
     gen_throughput: float = 0.0
     num_queue_reqs: int = 0
     cache_hit_rate: float = 0.0
+    cache_hit_total_num: float = 0.0
+    cache_req_total_num: float = 0.0
+    cache_total_hit_rate: float = 0.0
+    pool_available_size: float = 0.0
+    pool_evictable_size: float = 0.0
+    cache_evicted_num: float = 0.0
     num_grammar_queue_reqs: int = 0
     spec_accept_length: float = 0.0
     avg_request_queue_latency: float = 0.0
@@ -145,6 +151,8 @@ class SchedulerStats:
     num_prefill_infight_queue_reqs: int = 0
     num_decode_prealloc_queue_reqs: int = 0
     num_decode_transfer_queue_reqs: int = 0
+    use_default_cache: int = 0
+    use_lru_algo: int = 0
 
 
 class SchedulerMetricsCollector:
@@ -201,6 +209,48 @@ class SchedulerMetricsCollector:
         self.cache_hit_rate = Gauge(
             name="sglang:cache_hit_rate",
             documentation="The prefix cache hit rate.",
+            labelnames=labels.keys(),
+            multiprocess_mode="mostrecent",
+        )
+
+        self.cache_total_hit_rate = Gauge(
+            name="sglang:cache_total_hit_rate",
+            documentation="The prefix cache total hit rate.",
+            labelnames=labels.keys(),
+            multiprocess_mode="mostrecent",
+        )
+
+        self.pool_available_size = Gauge(
+            name="sglang:pool_available_size",
+            documentation="Ramaining available size (number of tokens)",
+            labelnames=labels.keys(),
+            multiprocess_mode="mostrecent",
+        )
+
+        self.pool_evictable_size = Gauge(
+            name="sglang:pool_evictable_size",
+            documentation="Evictable total size (unit: int64)",
+            labelnames=labels.keys(),
+            multiprocess_mode="mostrecent",
+        )
+
+        self.cache_evicted_num = Gauge(
+            name="sglang:cache_evicted_num",
+            documentation="Total number of evicted tokens",
+            labelnames=labels.keys(),
+            multiprocess_mode="mostrecent",
+        )
+
+        self.use_default_cache = Gauge(
+            name="sglang:use_default_cache",
+            documentation="Use default cache",
+            labelnames=labels.keys(),
+            multiprocess_mode="mostrecent",
+        )
+
+        self.use_lru_algo = Gauge(
+            name="sglang:use_lru_algo",
+            documentation="Use lru algo",
             labelnames=labels.keys(),
             multiprocess_mode="mostrecent",
         )
@@ -278,7 +328,13 @@ class SchedulerMetricsCollector:
         self._log_gauge(self.num_queue_reqs, stats.num_queue_reqs)
         self._log_gauge(self.num_grammar_queue_reqs, stats.num_grammar_queue_reqs)
         self._log_gauge(self.cache_hit_rate, stats.cache_hit_rate)
+        self._log_gauge(self.cache_total_hit_rate, stats.cache_total_hit_rate)
+        self._log_gauge(self.pool_available_size, stats.pool_available_size)
+        self._log_gauge(self.pool_evictable_size, stats.pool_evictable_size)
+        self._log_gauge(self.cache_evicted_num, stats.cache_evicted_num)
         self._log_gauge(self.spec_accept_length, stats.spec_accept_length)
+        self._log_gauge(self.use_default_cache, stats.use_default_cache)
+        self._log_gauge(self.use_lru_algo, stats.use_lru_algo)
 
         # Disaggregation metrics
         self._log_gauge(

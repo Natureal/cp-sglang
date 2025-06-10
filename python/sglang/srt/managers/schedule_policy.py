@@ -26,6 +26,9 @@ from sglang.srt.managers.schedule_batch import Req, ScheduleBatch
 from sglang.srt.mem_cache.base_prefix_cache import BasePrefixCache
 from sglang.srt.mem_cache.memory_pool import TokenToKVPoolAllocator
 from sglang.srt.mem_cache.radix_cache import RadixCache, TreeNode
+from sglang.srt.mem_cache.blindoracle_radix_cache import BlindOracleRadixCache, TreeNode
+from sglang.srt.mem_cache.guard_radix_cache import GuardRadixCache, TreeNode
+from sglang.srt.mem_cache.phase_lru_radix_cache import PhaseLRURadixCache
 
 # Clip the estimation of max_new_tokens for the request whose max_new_tokens is very large.
 # This can prevent the server from being too conservative.
@@ -72,6 +75,7 @@ class SchedulePolicy:
     def __init__(
         self,
         policy: str,
+        policy_cache_type: str,
         tree_cache: BasePrefixCache,
         enable_hierarchical_cache: bool,
     ):
@@ -79,12 +83,22 @@ class SchedulePolicy:
         self.tree_cache = tree_cache
         self.enable_hierarchical_cache = enable_hierarchical_cache
 
-        # It is used to find the matching prefix for in-batch prefix caching.
-        self.waiting_queue_radix_tree = RadixCache(
+        self.policy_cache_type = policy_cache_type
+        self.policy_cache_class_map = {
+            "default": RadixCache,
+            "phaselru": PhaseLRURadixCache,
+            "guard": GuardRadixCache,
+            "blindoracle": BlindOracleRadixCache,
+        }
+
+        # if not found, use RadixCache by default
+        self.cache_class = self.policy_cache_class_map.get(self.policy_cache_type, RadixCache)
+        self.waiting_queue_radix_tree = self.cache_class(
             req_to_token_pool=None,
             token_to_kv_pool_allocator=None,
             page_size=1,
             disable=False,
+            waiting_queue_cache = True,
         )
 
     def calc_priority(self, waiting_queue: List[Req]) -> bool:

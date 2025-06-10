@@ -83,6 +83,8 @@ from sglang.srt.managers.io_struct import (
     ProfileReq,
     ProfileReqOutput,
     ProfileReqType,
+    ConfigureCachingAlgorithmReqInput,
+    ConfigureOnlineTrainingReqInput,
     ReleaseMemoryOccupationReqInput,
     ReleaseMemoryOccupationReqOutput,
     ResumeMemoryOccupationReqInput,
@@ -124,6 +126,9 @@ from sglang.srt.managers.utils import validate_input_length
 from sglang.srt.mem_cache.chunk_cache import ChunkCache
 from sglang.srt.mem_cache.hiradix_cache import HiRadixCache
 from sglang.srt.mem_cache.radix_cache import RadixCache
+from sglang.srt.mem_cache.blindoracle_radix_cache import BlindOracleRadixCache
+from sglang.srt.mem_cache.phase_lru_radix_cache import PhaseLRURadixCache
+from sglang.srt.mem_cache.guard_radix_cache import GuardRadixCache
 from sglang.srt.metrics.collector import SchedulerMetricsCollector, SchedulerStats
 from sglang.srt.model_executor.forward_batch_info import ForwardMode, PPProxyTensors
 from sglang.srt.reasoning_parser import ReasoningParser
@@ -218,6 +223,16 @@ class Scheduler(
                 self.dp_size,
             )
         )
+
+        self.algo_type = "lru"
+
+        self.cache_type = "guard"
+        self.cache_class_map = {
+            "default": RadixCache,
+            "phaselru": PhaseLRURadixCache,
+            "guard": GuardRadixCache,
+            "blindoracle": BlindOracleRadixCache,
+        }
 
         # Init inter-process communication
         context = zmq.Context(2)
@@ -382,6 +397,7 @@ class Scheduler(
         # Init schedule policy and new token estimation
         self.policy = SchedulePolicy(
             self.schedule_policy,
+            self.cache_type,
             self.tree_cache,
             self.enable_hierarchical_cache,
         )
@@ -450,6 +466,8 @@ class Scheduler(
                 (ProfileReq, self.profile),
                 (GetInternalStateReq, self.get_internal_state),
                 (SetInternalStateReq, self.set_internal_state),
+                (ConfigureCachingAlgorithmReqInput, self.configure_caching_algorithm),
+                (ConfigureOnlineTrainingReqInput, self.configure_online_training),
                 (RpcReqInput, self.handle_rpc_request),
                 (ExpertDistributionReq, self.expert_distribution_handle),
             ]
@@ -514,12 +532,13 @@ class Scheduler(
                     hicache_write_policy=server_args.hicache_write_policy,
                 )
             else:
-                self.tree_cache = RadixCache(
+                #if not found, use RadixCache by default
+                self.cache_class = self.cache_class_map.get(self.cache_type, RadixCache)
+                self.tree_cache = self.cache_class(
                     req_to_token_pool=self.req_to_token_pool,
                     token_to_kv_pool_allocator=self.token_to_kv_pool_allocator,
                     page_size=self.page_size,
                     disable=server_args.disable_radix_cache,
-                    enable_kv_cache_events=self.enable_kv_cache_events,
                 )
 
         self.decode_mem_cache_buf_multiplier = (
@@ -1168,6 +1187,14 @@ class Scheduler(
             self.stats.token_usage = round(num_used / self.max_total_num_tokens, 2)
             self.stats.num_queue_reqs = len(self.waiting_queue)
             self.stats.cache_hit_rate = cache_hit_rate
+            self.stats.cache_hit_total_num += adder.log_hit_tokens
+            self.stats.cache_req_total_num += adder.log_input_tokens + adder.log_hit_tokens
+            self.stats.cache_total_hit_rate = self.stats.cache_hit_total_num / self.stats.cache_req_total_num
+            self.stats.pool_available_size = self.token_to_kv_pool_allocator.available_size()
+            self.stats.pool_evictable_size = self.token_to_kv_pool_allocator.evictable_size
+            self.stats.cache_evicted_num = self.token_to_kv_pool_allocator.evicted_num
+            self.stats.use_default_cache = 1 if self.cache_type == "default" else 0
+            self.stats.use_lru_algo = 1 if self.algo_type == "lru" else 0
 
             total_queue_latency = 0
             for req in can_run_list:
@@ -2207,6 +2234,18 @@ class Scheduler(
             logger.warning(f"session id {session_id} does not exist, cannot delete.")
         else:
             del self.sessions[session_id]
+
+    def configure_caching_algorithm(self, recv_req: ConfigureCachingAlgorithmReqInput):
+        self.algo_type = recv_req.algo_type
+        if self.tree_cache.set_algo_type is not None:
+            self.tree_cache.set_algo_type(self.algo_type)
+            logging.warning(f"Configure caching algorithm as {self.algo_type}")
+
+    def configure_online_training(self, recv_req: ConfigureOnlineTrainingReqInput):
+        if self.tree_cache.set_online_training is not None:
+            self.tree_cache.set_online_training(recv_req)
+        else:
+            logging.warning(f"No online training needed")
 
     def get_print_prefix(self):
         prefix = ""

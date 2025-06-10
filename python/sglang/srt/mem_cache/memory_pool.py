@@ -181,6 +181,9 @@ class TokenToKVPoolAllocator:
         self.device = device
         self.page_size = 1
 
+        self.evicted_num = 0
+        self.evictable_size = 0
+
         self.free_slots = None
         self.is_not_in_free_group = True
         self.free_group = []
@@ -190,6 +193,9 @@ class TokenToKVPoolAllocator:
 
     def available_size(self):
         return len(self.free_slots)
+
+    def record_eviction(self, num_evict):
+        self.evicted_num += num_evict
 
     def get_kvcache(self):
         return self._kvcache

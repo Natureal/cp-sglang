@@ -52,6 +52,8 @@ from sglang.srt.managers.io_struct import (
     AbortReq,
     CloseSessionReqInput,
     ConfigureLoggingReq,
+    ConfigureCachingAlgorithmReqInput,
+    ConfigureOnlineTrainingReqInput,
     EmbeddingReqInput,
     GenerateReqInput,
     GetWeightsByNameReqInput,
@@ -332,7 +334,6 @@ async def flush_cache():
         status_code=200 if ret.success else HTTPStatus.BAD_REQUEST,
     )
 
-
 @app.api_route("/start_profile", methods=["GET", "POST"])
 async def start_profile_async(obj: Optional[ProfileReqInput] = None):
     """Start profiling."""
@@ -537,6 +538,20 @@ async def close_session(obj: CloseSessionReqInput, request: Request):
         return Response(status_code=200)
     except Exception as e:
         return _create_error_response(e)
+
+
+@app.api_route("/configure_caching_algorithm", methods=["GET", "POST"])
+async def configure_caching_algorithm(obj: ConfigureCachingAlgorithmReqInput, request: Request):
+    """Configure the caching algorithm."""
+    await _global_state.tokenizer_manager.configure_caching_algorithm(obj)
+    return Response(status_code=200)
+
+
+@app.api_route("/configure_online_training", methods=["GET", "POST"])
+async def configure_online_training(obj: ConfigureOnlineTrainingReqInput, request: Request):
+    """Configure online training."""
+    await _global_state.tokenizer_manager.configure_online_training(obj)
+    return Response(status_code=200)
 
 
 @app.api_route("/configure_logging", methods=["GET", "POST"])

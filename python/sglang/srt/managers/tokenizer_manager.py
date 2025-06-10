@@ -71,6 +71,8 @@ from sglang.srt.managers.io_struct import (
     EmbeddingReqInput,
     ExpertDistributionReq,
     ExpertDistributionReqOutput,
+    ConfigureCachingAlgorithmReqInput,
+    ConfigureOnlineTrainingReqInput,
     FlushCacheReqInput,
     FlushCacheReqOutput,
     GenerateReqInput,
@@ -186,6 +188,8 @@ class TokenizerManager:
         self.send_to_scheduler = get_zmq_socket(
             context, zmq.PUSH, port_args.scheduler_input_ipc_name, True
         )
+
+        self.caching_algo = "default"
 
         # Read model args
         self.model_path = server_args.model_path
@@ -972,6 +976,16 @@ class TokenizerManager:
 
     async def close_session(
         self, obj: CloseSessionReqInput, request: Optional[fastapi.Request] = None
+    ):
+        await self.send_to_scheduler.send_pyobj(obj)
+
+    async def configure_caching_algorithm(
+        self, obj: ConfigureCachingAlgorithmReqInput
+    ):
+        await self.send_to_scheduler.send_pyobj(obj)
+
+    async def configure_online_training(
+        self, obj: ConfigureOnlineTrainingReqInput
     ):
         await self.send_to_scheduler.send_pyobj(obj)
 
