@@ -176,15 +176,15 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
 
         idx = 0
         for k in range(len(addresses)):
-            if addresses[k] not in self.access_time_dict or len(self.access_time_dict[addresses[k]]) == 1:
+            if addresses[k] in invalid_addr:
                 results.append(2**62)
             else:
                 results.append(np.expm1(preds[idx]))
                 idx += 1
-                logger.info(f"pred = {str(results[-1])}, features: {str((*[self.deltas[i][addresses[k]] for i in range(self.delta_nums)], *[self.edcs[i][addresses[k]] for i in range(self.edc_nums)]))}")
+            logger.info(f"pred = {str(results[-1])}, features: {str((*[self.deltas[i][addresses[k]] for i in range(self.delta_nums)], *[self.edcs[i][addresses[k]] for i in range(self.edc_nums)]))}")
         #logger.info(f"pred init result: {str(pred)}")
         #logger.info(f"pred final result: {str(pred)}")
-        return preds
+        return results
 
 
 class LRBBinaryPredictor(BinaryPredictor):
