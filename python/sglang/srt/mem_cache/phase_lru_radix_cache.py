@@ -121,6 +121,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         self.cache_size_k = 0
         self.page_size = page_size
         self.disable = disable
+        self.evictable_size_ = 0
 
         # phase-level
         self.distinct_element = set()
@@ -298,7 +299,8 @@ class PhaseLRURadixCache(BasePrefixCache):
             node.children[child_key] = new_node
             self.evictable_size_ += len(value)
 
-        self.token_to_kv_pool_allocator.evictable_size = self.evictable_size_
+        if self.token_to_kv_pool_allocator:
+            self.token_to_kv_pool_allocator.evictable_size = self.evictable_size_
         return total_prefix_length
     
     def _judge_evicted_in_phase(self, node: TreeNode):

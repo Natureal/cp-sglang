@@ -503,7 +503,8 @@ class BlindOracleRadixCache(BasePrefixCache):
             node.children[child_key] = new_node
             self.evictable_size_ += len(value)
 
-        self.token_to_kv_pool_allocator.evictable_size = self.evictable_size_
+        if self.token_to_kv_pool_allocator:
+            self.token_to_kv_pool_allocator.evictable_size = self.evictable_size_
         return total_prefix_length
     
     def _capture_print(self):

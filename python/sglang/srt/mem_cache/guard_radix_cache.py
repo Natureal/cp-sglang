@@ -120,6 +120,8 @@ class GuardRadixCache(BasePrefixCache):
         # GUARD algorithm specific state
         self.U: Set[TreeNode] = set()  # unrequested old pages in current phase
         self.current_phase = 0
+
+        self.evictable_size_ = 0
         
         self.reset()
 
@@ -286,7 +288,8 @@ class GuardRadixCache(BasePrefixCache):
             node.children[child_key] = new_node
             self.evictable_size_ += len(value)
 
-        self.token_to_kv_pool_allocator.evictable_size = self.evictable_size_
+        if self.token_to_kv_pool_allocator:
+            self.token_to_kv_pool_allocator.evictable_size = self.evictable_size_
         return total_prefix_length
     
     def _evict_by_lru(self, num_tokens: int):

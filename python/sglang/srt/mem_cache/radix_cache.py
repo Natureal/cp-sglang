@@ -394,7 +394,8 @@ class RadixCache(BasePrefixCache):
             node.children[child_key] = new_node
             self.evictable_size_ += len(value)
 
-        self.token_to_kv_pool_allocator.evictable_size = self.evictable_size_
+        if self.token_to_kv_pool_allocator:
+            self.token_to_kv_pool_allocator.evictable_size = self.evictable_size_
         return total_prefix_length
 
     def _print_helper(self, node: TreeNode, indent: int):
