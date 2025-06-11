@@ -565,6 +565,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         current_node_count = TreeNode.counter - self.deleted_node_count
         if len(self.distinct_element) >= current_node_count:
             self._start_new_phase()
+            logger.info(f"start a new phase, current_node_count: {current_node_count}")
 
         if original_ts is not None:
             self.sorted_list.discard(node.last_access_ts)
