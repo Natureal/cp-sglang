@@ -125,7 +125,7 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         # phase-level
         self.distinct_element = set()
-        self.phase_err_count = 0
+        self.phase_err_param = 1
         self.evicted_ts = {}
         self.inv_count = 0
         self.sorted_list = SortedList()
@@ -174,7 +174,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         self.distinct_element = set()
         self.evicted_ts = {}
         self.inv_count = 0
-        self.phase_err_count = 0
+        self.phase_err_param = int(math.sqrt(self.phase_err_param))
         self.sorted_list = SortedList()
         self.lru_budget = 0
 
@@ -309,12 +309,12 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         address = hash(tuple(node.key))
         if address in self.evicted_ts:
-            self.phase_err_count += 1
+            self.phase_err_param *= 2
             #rank = self.sorted_list.bisect_left(self.evicted_ts[address])
             #self.lru_budget += rank / self.cache_size_k
-            #self.lru_budget += len(node.value) * self.phase_err_count
-            self.lru_budget = 100000000
-            logger.info(f"reset lru_budget = {self.lru_budget}, phase_err_bount = {self.phase_err_count}")
+            self.lru_budget += len(node.value) * self.phase_err_param
+            #self.lru_budget = 100000000
+            logger.info(f"reset lru_budget = {self.lru_budget}, phase_err_bount = {self.phase_err_param}")
 
     def set_algo_type(self, algo_type):
         if self.algo_type != algo_type:
@@ -584,7 +584,7 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         self.distinct_element.add(hash(tuple(node.key)))
         current_node_count = TreeNode.counter - self.deleted_node_count
-        if len(self.distinct_element) >= self.cache_size_k: # current_node_count:
+        if len(self.distinct_element) >= current_node_count:
             self._start_new_phase()
             logger.info(f"start a new phase, current_node_count: {current_node_count}")
 
