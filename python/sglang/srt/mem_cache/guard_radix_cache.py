@@ -349,13 +349,13 @@ class GuardRadixCache(BasePrefixCache):
                     self._predict(unguarded_candidates)
                     # Choose node with maximum reuse distance (farthest reuse)
                     victim = max(unguarded_candidates, key=lambda node: node.pred)
-                    logger.info(f"victim pred = {victim.pred}")
+                    logger.info(f"victim pred = {victim.pred}, num of unguarded nodes: {len(unguarded_candidates)}")
 
             # Step 4: Perform eviction
             if victim and victim.value is not None:
-                logger.info(f"victim before free: {str(victim.value)}")
+                #logger.info(f"victim before free: {str(victim.value)}")
                 self.token_to_kv_pool_allocator.free(victim.value)
-                logger.info(f"victim after free: {str(victim.value)}")
+                #logger.info(f"victim after free: {str(victim.value)}")
                 num_evicted += len(victim.value)
                 
                 # Mark as evicted in current phase
