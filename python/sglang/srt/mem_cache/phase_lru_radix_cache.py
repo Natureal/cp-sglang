@@ -125,6 +125,7 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         # phase-level
         self.distinct_element = set()
+        self.phase_cache_k = 1
         self.phase_err_param = 1
         self.evicted_ts = {}
         self.inv_count = 0
@@ -173,9 +174,10 @@ class PhaseLRURadixCache(BasePrefixCache):
         self._start_new_phase()
 
     def _start_new_phase(self):
-        logger.info(f"TreeNode.counter = {TreeNode.counter}, deleted_node_count = {self.deleted_node_count}, num of distinct elements = {len(self.distinct_element)}")
+        logger.info(f"phase_cache_k = {self.phase_cache_k}, new phase_cache_k =  {TreeNode.counter - self.deleted_node_count}")
         logger.info(f"start a new phase, current_node_count: {TreeNode.counter - self.deleted_node_count}, decrease phase_err_param from {self.phase_err_param} to {int(math.sqrt(self.phase_err_param))}")
 
+        self.phase_cache_k = TreeNode.counter - self.deleted_node_count
         self.distinct_element = set()
         self.evicted_ts = {}
         self.inv_count = 0
@@ -183,6 +185,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         self.phase_err_param = int(math.sqrt(self.phase_err_param))
         self.sorted_list = SortedList()
         self.lru_budget = 0
+        
 
     def match_prefix(self, key: List[int], **kwargs) -> Tuple[torch.Tensor, int]:
         """Find the matching prefix from the radix tree.
@@ -495,7 +498,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             self.evicted_ts[hash(tuple(x.key))] = self.current_ts
             self._delete_leaf(x)
 
-            if len(x.parent.children) == 0 and x.parent != self.root_node:
+            if len(x.parent.children) == 0 and x.parent != self.root_node and x.parent.lock_ref == 0:
                 self._predict([x.parent])
                 heapq.heappush(heap_by_pred, (-x.parent.pred, x.parent))
 
@@ -503,13 +506,14 @@ class PhaseLRURadixCache(BasePrefixCache):
         if self.disable:
             return
         
+        self.current_ts += 1
         self.token_to_kv_pool_allocator.record_eviction(num_tokens)
 
         if self.degrade_to_lru == True:
             self._evict_by_lru(num_tokens)
             return
         
-        logger.info(f"current lru budget = {self.lru_budget}")
+        #logger.info(f"current lru budget = {self.lru_budget}")
         if  self.lru_budget >= 1:
             evict_by_lru_num = min(math.floor(self.lru_budget), num_tokens)
 
@@ -589,8 +593,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             return
 
         self.distinct_element.add(hash(tuple(node.key)))
-        current_node_count = TreeNode.counter - self.deleted_node_count
-        if len(self.distinct_element) >= current_node_count:
+        if len(self.distinct_element) >= self.phase_cache_k:
             self._start_new_phase()
 
         if original_ts is not None:
