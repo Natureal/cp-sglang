@@ -167,9 +167,9 @@ class PhaseLRURadixCache(BasePrefixCache):
         self.root_node.lock_ref = 1
         self.evictable_size_ = 0
         self.protected_size_ = 0
-        logger.info(f"reset !!!!!!!!!!!!!")
 
-        self._start_new_phase()
+        if self.degrade_to_lru == True or self.waiting_queue_cache == True:
+            self._start_new_phase()
 
     def _start_new_phase(self):
         logger.info(f"TreeNode.counter = {TreeNode.counter}, deleted_node_count = {self.deleted_node_count}, num of distinct elements = {len(self.distinct_element)}")
@@ -590,7 +590,6 @@ class PhaseLRURadixCache(BasePrefixCache):
         self.distinct_element.add(hash(tuple(node.key)))
         current_node_count = TreeNode.counter - self.deleted_node_count
         if len(self.distinct_element) >= current_node_count:
-            logger.info(f"1 TreeNode.counter = {TreeNode.counter}, deleted_node_count = {self.deleted_node_count}, num of distinct elements = {len(self.distinct_element)}")
             self._start_new_phase()
 
         if original_ts is not None:
