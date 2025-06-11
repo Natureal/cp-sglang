@@ -471,10 +471,11 @@ class PhaseLRURadixCache(BasePrefixCache):
 
             self.token_to_kv_pool_allocator.free(x.value)
             num_evicted += len(x.value)
-            self.evicted_ts[hash(tuple(x.key))] = self.ts
+            self.evicted_ts[hash(tuple(x.key))] = self.current_ts
             self._delete_leaf(x)
 
-            if len(x.parent.children) == 0:
+            if len(x.parent.children) == 0 and x.parent != self.root_node:
+                self._predict([x.parent])
                 heapq.heappush(heap_by_pred, (-x.parent.pred, x.parent))
 
     def evict(self, num_tokens: int):
