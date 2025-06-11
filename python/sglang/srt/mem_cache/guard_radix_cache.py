@@ -151,51 +151,16 @@ class GuardRadixCache(BasePrefixCache):
             if node.pred_valid == 0:
                 node_to_pred.append(node)
                 addresses.append(hash(tuple(node.key)))
-    
-        preds = self.predictor.predict(addresses)
-        for i in range(len(node_to_pred)):
-            node = node_to_pred[i]
-            if preds[i] == 2**62:
-                node.pred = -node.last_access_ts + preds[i]
-            else:
-                node.pred = node.last_access_ts + preds[i]
-            node.pred_valid = 1
 
-    def _dummy_predictor(self, nodes: List[TreeNode]) -> dict:
-        """Dummy predictor that returns random reuse distances for Belady algorithm.
-        In real implementation, this should be replaced with actual predictor.
-        
-        Args:
-            nodes: List of unguarded leaf nodes
-        Returns:
-            dict mapping node to reuse distance (higher means farther reuse)
-        """
-        return {node: random.randint(1, 1000) for node in nodes}
-
-    def _start_new_phase(self):
-        """Start a new phase: unguard all cached pages and reset phase-specific flags."""
-        self.current_phase += 1
-        
-        # Collect all cached nodes (excluding root)
-        all_nodes = []
-        stack = [self.root_node]
-        while stack:
-            node = stack.pop()
-            if node != self.root_node and not node.evicted:
-                all_nodes.append(node)
-                # Reset phase-specific flags
-                node.guarded = False
-            
-            for child in node.children.values():
-                if not child.evicted:
-                    stack.append(child)
-        
-        # All cached pages become unrequested old pages
-        self.U = set(all_nodes)
-        self.evicted_in_phase = set()
-        self.rand_evict_budget = 0
-        self.current_phase_err_num = 0
-        logger.info(f"new phase starts, num of all_nodes: {len(self.U)}")
+        if len(node_to_pred) > 0:
+            preds = self.predictor.predict(addresses)
+            for i in range(len(node_to_pred)):
+                node = node_to_pred[i]
+                if preds[i] == 2**62:
+                    node.pred = -node.last_access_ts + preds[i]
+                else:
+                    node.pred = node.last_access_ts + preds[i]
+                node.pred_valid = 1
 
     def match_prefix(self, key: List[int], **kwargs) -> Tuple[torch.Tensor, TreeNode]:
         """Find the matching prefix from the radix tree with GUARD tracking."""
@@ -304,6 +269,31 @@ class GuardRadixCache(BasePrefixCache):
             if len(x.parent.children) == 0:
                 heapq.heappush(leaves, x.parent)
 
+    def _start_new_phase(self):
+        """Start a new phase: unguard all cached pages and reset phase-specific flags."""
+        self.current_phase += 1
+        
+        # Collect all cached nodes (excluding root)
+        all_nodes = []
+        stack = [self.root_node]
+        while stack:
+            node = stack.pop()
+            if node != self.root_node and not node.evicted:
+                all_nodes.append(node)
+                # Reset phase-specific flags
+                node.guarded = False
+            
+            for child in node.children.values():
+                if not child.evicted:
+                    stack.append(child)
+        
+        # All cached pages become unrequested old pages
+        self.U = set(all_nodes)
+        self.evicted_in_phase = set()
+        self.rand_evict_budget = 0
+        self.current_phase_err_num = 0
+        logger.info(f"new phase starts, num of all_nodes: {len(self.U)}")
+
     def evict(self, num_tokens: int):
         """GUARD eviction algorithm implementation."""
         if self.disable:
@@ -316,26 +306,16 @@ class GuardRadixCache(BasePrefixCache):
         self.token_to_kv_pool_allocator.record_eviction(num_tokens)
 
         num_evicted = 0
-        
-        while num_evicted < num_tokens:
+
+        evictable_leaves = [node for node in self._collect_leaves() if node != self.root_node and node.lock_ref == 0]
+        while num_evicted < num_tokens and len(evictable_leaves):
             # Step 1: If U is empty, start new phase
             if len(self.U) == 0:
                 self._start_new_phase()
-                if len(self.U) == 0:  # No evictable nodes
-                    break
-
-            # Step 2: Collect evictable leaves (nodes with lock_ref == 0)
-            evictable_leaves = []
-            for node in self._collect_leaves():
-                if node != self.root_node and node.lock_ref == 0 and not node.evicted:
-                    evictable_leaves.append(node)
-            
-            if not evictable_leaves:
-                break
 
             # Step 3: Choose eviction strategy based on GUARD algorithm
             victim = None
-            
+
             if self.rand_evict_budget > 0:
                 u_candidates = [node for node in evictable_leaves if node in self.U]
                 if u_candidates:
@@ -345,32 +325,31 @@ class GuardRadixCache(BasePrefixCache):
             if victim is None:
                 # Strategy 2: Belady algorithm on unguarded nodes
                 unguarded_candidates = [node for node in evictable_leaves if not node.guarded]
-                if unguarded_candidates:
-                    self._predict(unguarded_candidates)
-                    # Choose node with maximum reuse distance (farthest reuse)
-                    victim = max(unguarded_candidates, key=lambda node: node.pred)
-                    logger.info(f"victim pred = {victim.pred}, num of unguarded nodes: {len(unguarded_candidates)}")
+                if len(unguarded_candidates) == 0:
+                    self._start_new_phase()
+                    unguarded_candidates = evictable_leaves
+
+                self._predict(unguarded_candidates)
+                # Choose node with maximum reuse distance (farthest reuse)
+                victim = max(unguarded_candidates, key=lambda node: node.pred)
+                logger.info(f"victim pred = {victim.pred}, num of unguarded nodes: {len(unguarded_candidates)}")
 
             # Step 4: Perform eviction
-            if victim and victim.value is not None:
-                #logger.info(f"victim before free: {str(victim.value)}")
-                self.token_to_kv_pool_allocator.free(victim.value)
-                #logger.info(f"victim after free: {str(victim.value)}")
-                num_evicted += len(victim.value)
-                
-                # Mark as evicted in current phase
-                address = hash(tuple(victim.key))
-                self.evicted_in_phase.add(address)
-                
-                # Remove from U if present
-                if victim in self.U:
-                    self.U.remove(victim)
-                
-                # Delete the leaf node
-                self._delete_leaf(victim)
-            else:
-                # No more nodes to evict
-                break
+            self.token_to_kv_pool_allocator.free(victim.value)
+            num_evicted += len(victim.value)
+            
+            # Mark as evicted in current phase
+            address = hash(tuple(victim.key))
+            self.evicted_in_phase.add(address)
+            
+            # Remove from U if present
+            self.U.discard(victim)
+
+            # Delete the leaf node
+            self._delete_leaf(victim)
+
+            if len(victim.parent.children) == 0:
+                evictable_leaves.append(victim.parent)
 
     def cache_finished_req(self, req):
         """Cache request when it finishes."""
