@@ -174,6 +174,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         self.distinct_element = set()
         self.evicted_ts = {}
         self.inv_count = 0
+        logger.info(f"TreeNode.counter = {TreeNode.counter}, deleted_node_count = {self.deleted_node_count}")
         logger.info(f"start a new phase, current_node_count: {TreeNode.counter - self.deleted_node_count}, decrease phase_err_param from {self.phase_err_param} to {int(math.sqrt(self.phase_err_param))}")
 
         self.phase_err_param = int(math.sqrt(self.phase_err_param))
