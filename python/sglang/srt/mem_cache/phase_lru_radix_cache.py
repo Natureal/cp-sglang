@@ -167,6 +167,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         self.root_node.lock_ref = 1
         self.evictable_size_ = 0
         self.protected_size_ = 0
+        logger.info(f"reset !!!!!!!!!!!!!")
 
         self._start_new_phase()
 
