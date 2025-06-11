@@ -345,6 +345,7 @@ class GuardRadixCache(BasePrefixCache):
             # Remove from U if present
             self.U.discard(victim)
 
+            logger.info(f"victim parent: {str(victim.parent)}, root node: {str(self.root_node)}")
             # Delete the leaf node
             self._delete_leaf(victim)
 
