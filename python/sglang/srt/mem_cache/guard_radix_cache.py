@@ -351,9 +351,9 @@ class GuardRadixCache(BasePrefixCache):
 
             # Step 4: Perform eviction
             if victim and victim.value is not None:
-                logger.info(f"victim before free: {str(victim)}")
+                logger.info(f"victim before free: {str(victim.value)}")
                 self.token_to_kv_pool_allocator.free(victim.value)
-                logger.info(f"victim after free: {str(victim)}")
+                logger.info(f"victim after free: {str(victim.value)}")
                 num_evicted += len(victim.value)
                 
                 # Mark as evicted in current phase
