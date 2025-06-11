@@ -456,6 +456,8 @@ class PhaseLRURadixCache(BasePrefixCache):
 
             if len(x.parent.children) == 0:
                 heapq.heappush(leaves, x.parent)
+
+        return num_evicted
     
     def _evict_by_pred(self, num_tokens: int):
         leaves = self._collect_leaves()
@@ -496,9 +498,10 @@ class PhaseLRURadixCache(BasePrefixCache):
         logger.info(f"current lru budget = {self.lru_budget}")
         if  self.lru_budget >= 1:
             evict_by_lru_num = min(math.floor(self.lru_budget), num_tokens)
-            self._evict_by_lru(evict_by_lru_num)
-            self.lru_budget -= evict_by_lru_num
-            num_tokens -= evict_by_lru_num
+
+            actual_evicted_num = self._evict_by_lru(evict_by_lru_num)
+            self.lru_budget = max(self.lru_budget - actual_evicted_num, 0)
+            num_tokens -= actual_evicted_num
 
         if num_tokens > 0:
             self._evict_by_pred(num_tokens)
