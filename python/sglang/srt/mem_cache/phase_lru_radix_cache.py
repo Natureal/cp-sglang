@@ -575,7 +575,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         if self.degrade_to_lru == True or self.waiting_queue_cache == True:
             return
 
-        self.predictor.access(hash(tuple(node.key)))
+        self.predictor.access(hash(tuple(node.key)), current_ts)
         node.pred_valid = 0
 
     def _predictor_split(self, original_key, node: TreeNode, new_node: TreeNode):
