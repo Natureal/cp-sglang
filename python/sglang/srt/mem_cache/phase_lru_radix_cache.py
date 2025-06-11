@@ -21,11 +21,14 @@ The radix tree data structure for managing the KV cache.
 
 import heapq
 import time
+import logging
 import math
 from collections import defaultdict
 from functools import partial
 from typing import TYPE_CHECKING, List, Optional, Tuple
 from sortedcontainers import SortedList
+
+logger = logging.getLogger(__name__)
 
 import torch
 
@@ -56,10 +59,9 @@ class TreeNode:
         self.key = None
         self.value = None
         self.lock_ref = 0
-        self.last_access_time = time.monotonic()
+        self.last_access_ts = 0
         self.pred = 0
         self.pred_valid = 0
-        self.ts = 0
 
         self.hit_count = 0
         # indicating the node is loading KV cache from host
@@ -120,15 +122,20 @@ class PhaseLRURadixCache(BasePrefixCache):
         self.page_size = page_size
         self.disable = disable
         self.distinct_element = set()
+
         self.evicted_ts = {}
         self.inv_count = 0
         self.sorted_list = SortedList()
         self.lru_budget = 0
-        self.ts = 0
+
+        self.deleted_node_count = 0
+        
+        self.current_ts = 0
 
         self.waiting_queue_cache = waiting_queue_cache
 
         self.algo_type = "lru"
+        self.degrade_to_lru = True
 
         #self.predictor = POPUPredictor()
         #self.predictor = PLECOPredictor()
@@ -157,6 +164,13 @@ class PhaseLRURadixCache(BasePrefixCache):
         self.root_node.lock_ref = 1
         self.evictable_size_ = 0
         self.protected_size_ = 0
+
+        self._start_new_phase()
+
+    def _start_new_phase(self):
+        self.distinct_element = set()
+        self.evicted_ts = {}
+        self.inv_count = 0
 
     def match_prefix(self, key: List[int], **kwargs) -> Tuple[torch.Tensor, int]:
         """Find the matching prefix from the radix tree.
@@ -190,14 +204,130 @@ class PhaseLRURadixCache(BasePrefixCache):
             value = torch.empty((0,), dtype=torch.int64, device=self.device)
 
         return value, last_node
+    
+    def _match_prefix_helper(self, node: TreeNode, key: List):
+        child_key = self.get_child_key_fn(key)
 
-    def insert(self, key: List, value=None):
+        value = []
+        while len(key) > 0 and child_key in node.children.keys():
+            child = node.children[child_key]
+            prefix_len = self.key_match_fn(child.key, key)
+            if prefix_len < len(child.key):
+                original_key = child.key
+                new_node = self._split_node(child.key, child, prefix_len)
+                self._predictor_split(original_key, node, new_node)
+                # copy ts from node when splitting node
+                self._record_access(new_node, None, node.last_access_ts)
+                self._judge_evicted_in_phase(new_node)
+
+                value.append(new_node.value)
+                node = new_node
+                break
+            else:
+                value.append(child.value)
+                node = child
+                key = key[prefix_len:]
+
+                if len(key):
+                    child_key = self.get_child_key_fn(key)
+
+        return value, node
+
+    def insert(self, key: List, value=None, finished_req = False):
         if self.disable:
             return 0
+        
+        if finished_req == True:
+            self.current_ts += 1
 
         if value is None:
             value = [x for x in key]
-        return self._insert_helper(self.root_node, key, value)
+        return self._insert_helper(self.root_node, key, value, finished_req)
+    
+    def _insert_helper(self, node: TreeNode, key: List, value, finished_req):
+        if len(key) == 0:
+            return 0
+        
+        if finished_req == True:
+            self._predictor_access(node, self.current_ts)
+            self._record_access(node, node.last_access_ts, self.current_ts)
+
+        child_key = self.get_child_key_fn(key)
+
+        total_prefix_length = 0
+        while len(key) > 0 and child_key in node.children.keys():
+            node = node.children[child_key]
+            
+            if finished_req == True:
+                self._predictor_access(node, self.current_ts)
+                self._record_access(node, node.last_access_ts, self.current_ts)
+
+            prefix_len = self.key_match_fn(node.key, key)
+            total_prefix_length += prefix_len
+            key = key[prefix_len:]
+            value = value[prefix_len:]
+
+            if prefix_len < len(node.key):
+                original_key = node.key
+                new_node = self._split_node(node.key, node, prefix_len)
+                self._predictor_split(original_key, node, new_node)
+                # copy ts from node when splitting node
+                self._record_access(new_node, None, node.last_access_ts)
+                self._judge_evicted_in_phase(new_node)
+
+                node = new_node
+
+            if len(key):
+                child_key = self.get_child_key_fn(key)
+
+        if len(key):
+            new_node = TreeNode()
+            new_node.parent = node
+            new_node.key = key
+            new_node.value = value
+
+            # copy ts from parent node when spawning node
+            self._record_access(new_node, None, node.last_access_ts)
+            self._judge_evicted_in_phase(new_node)
+
+            node.children[child_key] = new_node
+            self.evictable_size_ += len(value)
+
+        self.token_to_kv_pool_allocator.evictable_size = self.evictable_size_
+        return total_prefix_length
+    
+    def _judge_evicted_in_phase(self, node: TreeNode):
+        address = hash(tuple(node.key))
+        if address in self.evicted_ts:
+            #rank = self.sorted_list.bisect_left(self.evicted_ts[address])
+            #self.lru_budget += rank / self.cache_size_k
+            self.lru_budget += len(node.value)
+
+    def set_algo_type(self, algo_type):
+        if self.algo_type != algo_type:
+            self.algo_type = algo_type
+            if algo_type == "lru":
+                self.degrade_to_lru = True
+                logger.info(f"Caching algorithm switches from phaselru to lru")
+            elif algo_type == "phaselru":
+                self.degrade_to_lru = False
+                logger.info(f"Caching algorithm switches from lru to phaselru")
+        else:
+            logger.info(f"Caching algorithm is already {self.algo_type}")
+
+    def set_online_training(self, obj):
+        if self.degrade_to_lru == True or self.predictor.enable_online_training is None:
+            logger.info(f"No training needed")
+            return
+
+        logger.info(f"Configure online training as {obj}")
+        self.predictor.enable_online_training = obj.enable_online_training
+        if self.predictor.enable_online_training == "on":
+            if obj.training_interval is not None:
+                self.predictor.training_interval = obj.training_interval
+            if obj.training_window is not None:
+                self.predictor.training_window = obj.training_window
+            logger.info(f"Current online training config: enable({self.predictor.enable_online_training}), interval({self.predictor.training_interval}), window({self.predictor.training_window})")
 
     def cache_finished_req(self, req: Req):
         """Cache request when it finishes."""
@@ -224,7 +354,7 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         # Radix Cache takes one ref in memory pool
         new_prefix_len = self.insert(
-            token_ids[:page_aligned_len], page_aligned_kv_indices
+            token_ids[:page_aligned_len], page_aligned_kv_indices, True
         )
         self.token_to_kv_pool_allocator.free(
             kv_indices[len(req.prefix_indices) : new_prefix_len]
@@ -285,9 +415,21 @@ class PhaseLRURadixCache(BasePrefixCache):
         return self._total_size_helper()
 
     def _predict(self, nodes: List[TreeNode]):
+        node_to_pred = []
+        addresses = []
         for node in nodes:
             if node.pred_valid == 0:
-                node.pred = self.predictor.predict(hash(tuple(node.key)))
+                node_to_pred.append(node)
+                addresses.append(hash(tuple(node.key)))
+
+        if len(node_to_pred) > 0:
+            preds = self.predictor.predict(addresses)
+            for i in range(len(node_to_pred)):
+                node = node_to_pred[i]
+                if preds[i] == 2**62:
+                    node.pred = -node.last_access_ts + preds[i]
+                else:
+                    node.pred = node.last_access_ts + preds[i]
                 node.pred_valid = 1
 
     def _evict_by_lru(self, num_tokens: int):
@@ -340,12 +482,13 @@ class PhaseLRURadixCache(BasePrefixCache):
             return
         
         self.token_to_kv_pool_allocator.record_eviction(num_tokens)
+
         if self.lru_budget >= 1:
             evict_by_lru_num = min(math.floor(self.lru_budget), num_tokens)
             self._evict_by_lru(evict_by_lru_num)
             self.lru_budget -= evict_by_lru_num
             num_tokens -= evict_by_lru_num
-        
+
         if num_tokens > 0:
             self._evict_by_pred(num_tokens)
 
@@ -397,34 +540,6 @@ class PhaseLRURadixCache(BasePrefixCache):
 
     ##### Internal Helper Functions #####
 
-    def _match_prefix_helper(self, node: TreeNode, key: List):
-        node.last_access_time = time.monotonic()
-        #self._predictor_access(node)
-        child_key = self.get_child_key_fn(key)
-
-        value = []
-        while len(key) > 0 and child_key in node.children.keys():
-            child = node.children[child_key]
-            child.last_access_time = time.monotonic()
-            #self._predictor_access(child)
-            prefix_len = self.key_match_fn(child.key, key)
-            if prefix_len < len(child.key):
-                new_node = self._split_node(child.key, child, prefix_len)
-                value.append(new_node.value)
-                #self._predictor_access(child)
-                #self._predictor_access(new_node)
-                node = new_node
-                break
-            else:
-                value.append(child.value)
-                node = child
-                key = key[prefix_len:]
-
-                if len(key):
-                    child_key = self.get_child_key_fn(key)
-
-        return value, node
-
     def _split_node(self, key, child: TreeNode, split_len: int):
         # new_node -> child
         new_node = TreeNode()
@@ -440,69 +555,44 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         return new_node
     
-    def _predictor_access(self, node: TreeNode):
-        if self.token_to_kv_pool_allocator == None:
+    def _record_access(self, node: TreeNode, original_ts, new_ts):
+        self.distinct_element.add(hash(tuple(node.key)))
+        current_node_count = TreeNode.counter - self.deleted_node_count
+        if len(self.distinct_element) >= current_node_count:
+            self._start_new_phase()
+
+        if original_ts is not None:
+            self.sorted_list.discard(node.last_access_ts)
+        node.last_access_ts = new_ts
+        self.sorted_list.add(node.last_access_ts)
+    
+    def _predictor_access(self, node: TreeNode, current_ts):
+        if self.degrade_to_lru == True or self.waiting_queue_cache == True:
             return
 
-        address = hash(tuple(node.key))
-        self.distinct_element.add(address)
-        
-        if len(self.distinct_element) >= self.cache_size_k:
-            self.distinct_element = set()
-            self.evicted_ts = {}
-            self.inv_count = 0
-
-        if address in self.evicted_ts:
-            rank = self.sorted_list.bisect_left(self.evicted_ts[address])
-            self.lru_budget += rank / self.cache_size_k
-
-        self.predictor.access(address)
+        self.predictor.access(hash(tuple(node.key)))
         node.pred_valid = 0
 
-        if node.ts in self.sorted_list:
-            self.sorted_list.remove(node.ts)
-        self.ts += 1
-        node.ts = self.ts
-        self.sorted_list.add(node.ts)
+    def _predictor_split(self, original_key, node: TreeNode, new_node: TreeNode):
+        if self.degrade_to_lru == True or self.waiting_queue_cache == True:
+            return
+        self._predictor_feature_copy(original_key, node.key)
+        self._predictor_feature_copy(original_key, new_node.key)
+        # copy pred from original node
+        new_node.pred_valid = node.pred_valid
+        new_node.pred = node.pred
 
-    def _insert_helper(self, node: TreeNode, key: List, value):
-        node.last_access_time = time.monotonic()
-        if len(key) == 0:
-            return 0
-        self._predictor_access(node)
+    def _predictor_feature_copy(self, key, new_key):
+        self.predictor.feature_copy(hash(tuple(key)), hash(tuple(new_key)))
 
-        child_key = self.get_child_key_fn(key)
-
-        total_prefix_length = 0
-        while len(key) > 0 and child_key in node.children.keys():
-            node = node.children[child_key]
-            node.last_access_time = time.monotonic()
-            self._predictor_access(node)
-            prefix_len = self.key_match_fn(node.key, key)
-            total_prefix_length += prefix_len
-            key = key[prefix_len:]
-            value = value[prefix_len:]
-
-            if prefix_len < len(node.key):
-                new_node = self._split_node(node.key, node, prefix_len)
-                self._predictor_access(node)
-                self._predictor_access(new_node)
-                node = new_node
-
-            if len(key):
-                child_key = self.get_child_key_fn(key)
-
-        if len(key):
-            new_node = TreeNode()
-            new_node.parent = node
-            new_node.key = key
-            new_node.value = value
-            self._predictor_access(new_node)
-            node.children[child_key] = new_node
-            self.evictable_size_ += len(value)
-
-        self.token_to_kv_pool_allocator.evictable_size = self.evictable_size_
-        return total_prefix_length
+    def _predictor_spawn(self, node: TreeNode, new_node: TreeNode):
+        if self.degrade_to_lru == True or self.waiting_queue_cache == True:
+            return
+        self._predictor_feature_copy(node.key, new_node.key)
+        # copy pred from parent node
+        new_node.pred_valid = node.pred_valid
+        new_node.pred = node.pred
+       # pass
 
     def _print_helper(self, node: TreeNode, indent: int):
         """Prints the radix tree in a human-readable format."""
@@ -528,6 +618,7 @@ class PhaseLRURadixCache(BasePrefixCache):
                 break
         del node.parent.children[k]
         self.evictable_size_ -= len(node.key)
+        self.deleted_node_count += 1
 
     def _total_size_helper(self):
         total_size = 0

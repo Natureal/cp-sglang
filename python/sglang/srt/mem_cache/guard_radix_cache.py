@@ -42,9 +42,6 @@ class TreeNode:
         # GUARD algorithm specific attributes
         self.guarded = False           # whether the node is guarded in current phase
 
-        # predictor
-        self.freq = 1
-
         self.id = TreeNode.counter if id is None else id
         TreeNode.counter += 1
 
@@ -123,7 +120,6 @@ class GuardRadixCache(BasePrefixCache):
         # GUARD algorithm specific state
         self.U: Set[TreeNode] = set()  # unrequested old pages in current phase
         self.current_phase = 0
-        self.current_request_key: Optional[List[int]] = None  # track current request
         
         self.reset()
 
@@ -140,7 +136,6 @@ class GuardRadixCache(BasePrefixCache):
         # Reset GUARD state
         self.U.clear()
         self.current_phase = 0
-        self.current_request_key = None
         self.current_phase_err_num = 0
         self.phase_relax_times = 10
     
@@ -178,9 +173,6 @@ class GuardRadixCache(BasePrefixCache):
             page_aligned_len = len(key) // self.page_size * self.page_size
             key = key[:page_aligned_len]
 
-        # Update current request for GUARD algorithm
-        self.current_request_key = key.copy()
-
         value, last_node = self._match_prefix_helper(self.root_node, key)
         if value:
             value = torch.cat(value)
@@ -192,8 +184,6 @@ class GuardRadixCache(BasePrefixCache):
 
     def _match_prefix_helper(self, node: TreeNode, key: List):
         """Match prefix helper with GUARD access tracking."""
-        #self._predictor_access(node)
-        node.freq += 1
         
         if self.degrade_to_lru == False:
             # GUARD: If node is in U (unrequested), remove it and mark as guarded
@@ -205,8 +195,6 @@ class GuardRadixCache(BasePrefixCache):
         value = []
         while len(key) > 0 and child_key in node.children.keys():
             child = node.children[child_key]
-            #self._predictor_access(child)
-            child.freq += 1
             
             if self.degrade_to_lru == False:
                 # GUARD: Track access to child node
@@ -245,11 +233,66 @@ class GuardRadixCache(BasePrefixCache):
             value = [x for x in key]
         return self._insert_helper(self.root_node, key, value, finished_req)
     
+    def _insert_helper(self, node: TreeNode, key: List, value, finished_req):
+        if len(key) == 0:
+            return 0
+        # update ts and features only when the request is finished
+        if finished_req == True:
+            self._predictor_access(node, self.current_ts)
+            node.last_access_ts = self.current_ts
+
+        child_key = self.get_child_key_fn(key)
+
+        total_prefix_length = 0
+        while len(key) > 0 and child_key in node.children.keys():
+            node = node.children[child_key]
+            if finished_req == True:
+                self._predictor_access(node, self.current_ts)
+                node.last_access_ts = self.current_ts
+
+            prefix_len = self.key_match_fn(node.key, key)
+            total_prefix_length += prefix_len
+            key = key[prefix_len:]
+            value = value[prefix_len:]
+
+            if prefix_len < len(node.key):
+                original_key = node.key
+                new_node = self._split_node(node.key, node, prefix_len)
+                self._predictor_split(original_key, node, new_node)
+                # copy ts from node when splitting node
+                new_node.last_access_ts = node.last_access_ts
+
+                if self._judge_evicted_in_phase(new_node):
+                    new_node.guarded = True
+                    self.rand_evict_budget += 1
+                node = new_node
+
+            if len(key):
+                child_key = self.get_child_key_fn(key)
+
+        if len(key):
+            new_node = TreeNode()
+            new_node.parent = node
+            new_node.key = key
+            new_node.value = value
+            #self._predictor_spawn(node, new_node)
+            # copy ts from parent node when spawning node
+            new_node.last_access_ts = node.last_access_ts
+
+            if self._judge_evicted_in_phase(new_node):
+                new_node.guarded = True
+                self.rand_evict_budget += 1
+
+            node.children[child_key] = new_node
+            self.evictable_size_ += len(value)
+
+        self.token_to_kv_pool_allocator.evictable_size = self.evictable_size_
+        return total_prefix_length
+    
     def _evict_by_lru(self, num_tokens: int):
         if self.disable:
             return
-        
-        self.token_to_kv_pool_allocator.record_eviction(num_tokens)
+
         leaves = self._collect_leaves()
         heapq.heapify(leaves)
 
@@ -299,11 +342,11 @@ class GuardRadixCache(BasePrefixCache):
         if self.disable:
             return
         
+        self.token_to_kv_pool_allocator.record_eviction(num_tokens)
+        
         if self.degrade_to_lru == True:
             self._evict_by_lru(num_tokens)
             return
-        
-        self.token_to_kv_pool_allocator.record_eviction(num_tokens)
 
         num_evicted = 0
 
@@ -512,62 +555,6 @@ class GuardRadixCache(BasePrefixCache):
         if address in self.evicted_in_phase:
             return True
         return False
-
-    def _insert_helper(self, node: TreeNode, key: List, value, finished_req):
-        if len(key) == 0:
-            return 0
-        # update ts and features only when the request is finished
-        if finished_req == True:
-            self._predictor_access(node, self.current_ts)
-            node.last_access_ts = self.current_ts
-
-        child_key = self.get_child_key_fn(key)
-
-        total_prefix_length = 0
-        while len(key) > 0 and child_key in node.children.keys():
-            node = node.children[child_key]
-            if finished_req == True:
-                self._predictor_access(node, self.current_ts)
-                node.last_access_ts = self.current_ts
-
-            prefix_len = self.key_match_fn(node.key, key)
-            total_prefix_length += prefix_len
-            key = key[prefix_len:]
-            value = value[prefix_len:]
-
-            if prefix_len < len(node.key):
-                original_key = node.key
-                new_node = self._split_node(node.key, node, prefix_len)
-                self._predictor_split(original_key, node, new_node)
-                # copy ts from node when splitting node
-                new_node.last_access_ts = node.last_access_ts
-
-                if self._judge_evicted_in_phase(new_node):
-                    new_node.guarded = True
-                    self.rand_evict_budget += 1
-                node = new_node
-
-            if len(key):
-                child_key = self.get_child_key_fn(key)
-
-        if len(key):
-            new_node = TreeNode()
-            new_node.parent = node
-            new_node.key = key
-            new_node.value = value
-            #self._predictor_spawn(node, new_node)
-            # copy ts from parent node when spawning node
-            new_node.last_access_ts = node.last_access_ts
-
-            if self._judge_evicted_in_phase(new_node):
-                new_node.guarded = True
-                self.rand_evict_budget += 1
-
-            node.children[child_key] = new_node
-            self.evictable_size_ += len(value)
-
-        self.token_to_kv_pool_allocator.evictable_size = self.evictable_size_
-        return total_prefix_length
 
     def inc_lock_ref(self, node: TreeNode):
         if self.disable:
