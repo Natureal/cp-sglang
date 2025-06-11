@@ -194,6 +194,8 @@ class GuardRadixCache(BasePrefixCache):
         self.U = set(all_nodes)
         self.evicted_in_phase = set()
         self.rand_evict_budget = 0
+        self.current_phase_err_num = 0
+        logger.info(f"new phase starts, num of all_nodes: {len(self.U)}")
 
     def match_prefix(self, key: List[int], **kwargs) -> Tuple[torch.Tensor, TreeNode]:
         """Find the matching prefix from the radix tree with GUARD tracking."""
