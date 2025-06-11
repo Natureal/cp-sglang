@@ -81,7 +81,7 @@ class TreeNode:
         return self.host_value is not None
 
     def __lt__(self, other: "TreeNode"):
-        return self.last_access_time < other.last_access_time
+        return self.last_access_ts < other.last_access_ts
     
     #def __lt__(self, other: "TreeNode"):
      #   return self.pred > other.pred
