@@ -321,7 +321,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             self.phase_err_param = min(self.phase_err_param * 2, 100000000)
             #rank = self.sorted_list.bisect_left(self.evicted_ts[address])
             #self.lru_budget += rank / self.cache_size_k
-            self.lru_budget = min(self.lru_budget + len(node.value) * self.phase_err_param, 100000000)
+            self.lru_budget = min(self.lru_budget + self.phase_err_param, 100000000)
             #self.lru_budget = 100000000
             logger.info(f"reset lru_budget = {self.lru_budget}, phase_err_param = {self.phase_err_param}")
 
@@ -459,8 +459,8 @@ class PhaseLRURadixCache(BasePrefixCache):
         heapq.heapify(leaves)
 
         num_evicted = 0
-        while num_evicted < num_tokens and len(leaves):
-            x = heapq.heappop(leaves)      
+        while num_evicted < num_tokens and len(leaves) and self.lru_budget >= 1:
+            x = heapq.heappop(leaves)
 
             if x == self.root_node:
                 break
@@ -470,6 +470,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             self.token_to_kv_pool_allocator.free(x.value)
             num_evicted += len(x.value)
             self._delete_leaf(x)
+            self.lru_budget -= 1
 
             if len(x.parent.children) == 0:
                 heapq.heappush(leaves, x.parent)
@@ -515,10 +516,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         
         #logger.info(f"current lru budget = {self.lru_budget}")
         if  self.lru_budget >= 1:
-            evict_by_lru_num = min(math.floor(self.lru_budget), num_tokens)
-
-            actual_evicted_num = self._evict_by_lru(evict_by_lru_num)
-            self.lru_budget = max(self.lru_budget - actual_evicted_num, 0)
+            actual_evicted_num = self._evict_by_lru(num_tokens)
             num_tokens -= actual_evicted_num
 
         if num_tokens > 0:
