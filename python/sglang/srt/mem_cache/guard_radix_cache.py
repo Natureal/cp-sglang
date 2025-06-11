@@ -527,7 +527,7 @@ class GuardRadixCache(BasePrefixCache):
          #   logger.info(f"node pred = {node.pred}, truth = {self.current_ts}, interval = {self.current_ts - node.last_access_ts}, node key = {hash(tuple(node.key))}")
         node.pred_valid = 0
 
-        #logger.info(f"current ts: {self.current_ts}")
+        #logger.info(f"current ts: {self.current_ts}")F
         #if self.current_ts % 100 == 0:
         #    captured = self._capture_print()
         #    logger.info(f"---------------------------------------------------- tree structure: {captured}")
