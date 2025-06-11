@@ -122,6 +122,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         self.page_size = page_size
         self.disable = disable
 
+        # phase-level
         self.distinct_element = set()
         self.phase_err_count = 0
         self.evicted_ts = {}
@@ -129,8 +130,8 @@ class PhaseLRURadixCache(BasePrefixCache):
         self.sorted_list = SortedList()
         self.lru_budget = 0
 
+        # global-level
         self.deleted_node_count = 0
-        
         self.current_ts = 0
 
         self.waiting_queue_cache = waiting_queue_cache
@@ -172,6 +173,9 @@ class PhaseLRURadixCache(BasePrefixCache):
         self.distinct_element = set()
         self.evicted_ts = {}
         self.inv_count = 0
+        self.phase_err_count = 0
+        self.sorted_list = SortedList()
+        self.lru_budget = 0
 
     def match_prefix(self, key: List[int], **kwargs) -> Tuple[torch.Tensor, int]:
         """Find the matching prefix from the radix tree.
@@ -307,6 +311,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             #rank = self.sorted_list.bisect_left(self.evicted_ts[address])
             #self.lru_budget += rank / self.cache_size_k
             self.lru_budget += len(node.value) * self.phase_err_count
+            logger.info(f"reset lru_budget = {self.lru_budget}, phase_err_bount = {self.phase_err_count}")
 
     def set_algo_type(self, algo_type):
         if self.algo_type != algo_type:
