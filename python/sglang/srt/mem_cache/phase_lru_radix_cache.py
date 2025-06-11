@@ -318,10 +318,10 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         address = hash(tuple(node.key))
         if address in self.evicted_ts:
-            self.phase_err_param *= 2
+            self.phase_err_param = min(self.phase_err_param * 2, 100000000)
             #rank = self.sorted_list.bisect_left(self.evicted_ts[address])
             #self.lru_budget += rank / self.cache_size_k
-            self.lru_budget += len(node.value) * self.phase_err_param
+            self.lru_budget = min(self.lru_budget + len(node.value) * self.phase_err_param, 100000000)
             #self.lru_budget = 100000000
             logger.info(f"reset lru_budget = {self.lru_budget}, phase_err_param = {self.phase_err_param}")
 
