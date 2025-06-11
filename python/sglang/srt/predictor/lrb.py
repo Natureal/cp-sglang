@@ -169,7 +169,7 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
                 continue
             features.append((*[self.deltas[i][addresses[k]] for i in range(self.delta_nums)], *[self.edcs[i][addresses[k]] for i in range(self.edc_nums)]))
 
-        logger.info(f"features: {str(features)}")
+        #logger.info(f"features: {str(features)}")
         preds = []
         if len(features) > 0:
             preds = self._model(features)
@@ -181,7 +181,7 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
             else:
                 results.append(np.expm1(preds[idx]))
                 idx += 1
-                logger.info(f"pred = {str(results[-1])}, features: {str((*[self.deltas[i][addresses[k]] for i in range(self.delta_nums)], *[self.edcs[i][addresses[k]] for i in range(self.edc_nums)]))}")
+                #logger.info(f"pred = {str(results[-1])}, features: {str((*[self.deltas[i][addresses[k]] for i in range(self.delta_nums)], *[self.edcs[i][addresses[k]] for i in range(self.edc_nums)]))}")
         return results
 
 

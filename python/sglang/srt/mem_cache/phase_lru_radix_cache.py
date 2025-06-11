@@ -121,8 +121,9 @@ class PhaseLRURadixCache(BasePrefixCache):
         self.cache_size_k = 0
         self.page_size = page_size
         self.disable = disable
-        self.distinct_element = set()
 
+        self.distinct_element = set()
+        self.phase_err_count = 0
         self.evicted_ts = {}
         self.inv_count = 0
         self.sorted_list = SortedList()
@@ -302,9 +303,10 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         address = hash(tuple(node.key))
         if address in self.evicted_ts:
+            self.phase_err_count += 1
             #rank = self.sorted_list.bisect_left(self.evicted_ts[address])
             #self.lru_budget += rank / self.cache_size_k
-            self.lru_budget += len(node.value)
+            self.lru_budget += len(node.value) * self.phase_err_count
 
     def set_algo_type(self, algo_type):
         if self.algo_type != algo_type:
@@ -490,7 +492,8 @@ class PhaseLRURadixCache(BasePrefixCache):
         if self.degrade_to_lru == True:
             self._evict_by_lru(num_tokens)
             return
-
+        
+        logger.info(f"current lru budget = {self.lru_budget}")
         if  self.lru_budget >= 1:
             evict_by_lru_num = min(math.floor(self.lru_budget), num_tokens)
             self._evict_by_lru(evict_by_lru_num)
