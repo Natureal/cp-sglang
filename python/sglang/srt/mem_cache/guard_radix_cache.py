@@ -348,7 +348,7 @@ class GuardRadixCache(BasePrefixCache):
             # Delete the leaf node
             self._delete_leaf(victim)
 
-            if len(victim.parent.children) == 0 and victim.parent != self.root_node:
+            if len(victim.parent.children) == 0 and victim.parent != self.root_node and victim.parent.lock_ref == 0:
                 evictable_leaves.append(victim.parent)
 
     def cache_finished_req(self, req):
