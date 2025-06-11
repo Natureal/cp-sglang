@@ -335,6 +335,7 @@ class GuardRadixCache(BasePrefixCache):
                 logger.info(f"victim pred = {victim.pred}, num of unguarded nodes: {len(unguarded_candidates)}")
 
             # Step 4: Perform eviction
+            evictable_leaves.remove(victim)
             self.token_to_kv_pool_allocator.free(victim.value)
             num_evicted += len(victim.value)
             
