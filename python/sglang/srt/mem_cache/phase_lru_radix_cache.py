@@ -314,7 +314,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             #self.lru_budget += rank / self.cache_size_k
             self.lru_budget += len(node.value) * self.phase_err_param
             #self.lru_budget = 100000000
-            logger.info(f"reset lru_budget = {self.lru_budget}, phase_err_bount = {self.phase_err_param}")
+            logger.info(f"reset lru_budget = {self.lru_budget}, phase_err_param = {self.phase_err_param}")
 
     def set_algo_type(self, algo_type):
         if self.algo_type != algo_type:
