@@ -153,7 +153,10 @@ class GuardRadixCache(BasePrefixCache):
         preds = self.predictor.predict(addresses)
         for i in range(len(node_to_pred)):
             node = node_to_pred[i]
-            node.pred = node.last_access_ts + preds[i]
+            if preds[i] == 2**62:
+                node.pred = -node.last_access_ts + preds[i]
+            else:
+                node.pred = node.last_access_ts + preds[i]
             node.pred_valid = 1
 
     def _dummy_predictor(self, nodes: List[TreeNode]) -> dict:
