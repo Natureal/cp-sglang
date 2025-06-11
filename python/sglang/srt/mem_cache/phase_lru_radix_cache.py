@@ -484,7 +484,11 @@ class PhaseLRURadixCache(BasePrefixCache):
         
         self.token_to_kv_pool_allocator.record_eviction(num_tokens)
 
-        if self.lru_budget >= 1:
+        if self.degrade_to_lru == True:
+            self._evict_by_lru(num_tokens)
+            return
+
+        if  self.lru_budget >= 1:
             evict_by_lru_num = min(math.floor(self.lru_budget), num_tokens)
             self._evict_by_lru(evict_by_lru_num)
             self.lru_budget -= evict_by_lru_num
