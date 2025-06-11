@@ -551,6 +551,9 @@ class GuardRadixCache(BasePrefixCache):
        # pass
 
     def _judge_evicted_in_phase(self, node: TreeNode):
+        if self.degrade_to_lru == True or self.waiting_queue_cache == True:
+            return
+
         address = hash(tuple(node.key))
         if address in self.evicted_in_phase:
             return True

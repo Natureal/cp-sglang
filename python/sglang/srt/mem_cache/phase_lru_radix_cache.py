@@ -297,6 +297,9 @@ class PhaseLRURadixCache(BasePrefixCache):
         return total_prefix_length
     
     def _judge_evicted_in_phase(self, node: TreeNode):
+        if self.degrade_to_lru == True or self.waiting_queue_cache == True:
+            return
+
         address = hash(tuple(node.key))
         if address in self.evicted_ts:
             #rank = self.sorted_list.bisect_left(self.evicted_ts[address])
@@ -561,6 +564,10 @@ class PhaseLRURadixCache(BasePrefixCache):
         return new_node
     
     def _record_access(self, node: TreeNode, original_ts, new_ts):
+        if self.degrade_to_lru == True or self.waiting_queue_cache == True:
+            node.last_access_ts = new_ts
+            return
+
         self.distinct_element.add(hash(tuple(node.key)))
         current_node_count = TreeNode.counter - self.deleted_node_count
         if len(self.distinct_element) >= current_node_count:
