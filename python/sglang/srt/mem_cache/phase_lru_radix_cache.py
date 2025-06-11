@@ -310,7 +310,8 @@ class PhaseLRURadixCache(BasePrefixCache):
             self.phase_err_count += 1
             #rank = self.sorted_list.bisect_left(self.evicted_ts[address])
             #self.lru_budget += rank / self.cache_size_k
-            self.lru_budget += len(node.value) * self.phase_err_count
+            #self.lru_budget += len(node.value) * self.phase_err_count
+            self.lru_budget = 100000000
             logger.info(f"reset lru_budget = {self.lru_budget}, phase_err_bount = {self.phase_err_count}")
 
     def set_algo_type(self, algo_type):
