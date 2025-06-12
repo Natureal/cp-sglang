@@ -222,8 +222,6 @@ class PhaseLRURadixCache(BasePrefixCache):
     
     def _match_prefix_helper(self, node: TreeNode, key: List):
         child_key = self.get_child_key_fn(key)
-        
-        logger.info(f"key = {str(key)}")
 
         value = []
         while len(key) > 0 and child_key in node.children.keys():
@@ -458,12 +456,15 @@ class PhaseLRURadixCache(BasePrefixCache):
                     node.pred = node.last_access_ts + preds[i]
                 node.pred_valid = 1
 
-    def _evict_by_lru(self, num_tokens: int):
+    def _evict_by_lru(self, num_tokens: int, based_on_budget: bool):
         leaves = self._collect_leaves()
         heapq.heapify(leaves)
 
         num_evicted = 0
-        while num_evicted < num_tokens and len(leaves) and self.lru_budget >= 1:
+        while num_evicted < num_tokens and len(leaves):
+            if based_on_budget == True and self.lru_budget < 1:
+                break
+
             x = heapq.heappop(leaves)
 
             if x == self.root_node:
@@ -474,7 +475,9 @@ class PhaseLRURadixCache(BasePrefixCache):
             self.token_to_kv_pool_allocator.free(x.value)
             num_evicted += len(x.value)
             self._delete_leaf(x)
-            self.lru_budget -= 1
+
+            if based_on_budget == True:
+                self.lru_budget -= 1
 
             if len(x.parent.children) == 0:
                 heapq.heappush(leaves, x.parent)
@@ -515,14 +518,14 @@ class PhaseLRURadixCache(BasePrefixCache):
         self.token_to_kv_pool_allocator.record_eviction(num_tokens)
 
         if self.degrade_to_lru == True:
-            self._evict_by_lru(num_tokens)
+            self._evict_by_lru(num_tokens, False)
             return
         
         self.token_to_kv_pool_allocator.free_group_begin()
         
         #logger.info(f"current lru budget = {self.lru_budget}")
         if  self.lru_budget >= 1:
-            actual_evicted_num = self._evict_by_lru(num_tokens)
+            actual_evicted_num = self._evict_by_lru(num_tokens, True)
             num_tokens -= actual_evicted_num
 
         if num_tokens > 0:
