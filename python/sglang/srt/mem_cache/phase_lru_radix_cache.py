@@ -142,6 +142,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         # global-level
         self.deleted_node_count = 0
         self.current_ts = 0
+        self.rank_sum = 0
 
         self.waiting_queue_cache = waiting_queue_cache
 
@@ -327,9 +328,11 @@ class PhaseLRURadixCache(BasePrefixCache):
         if address in self.pred_evicted_ts:
             if len(self.sorted_list) > 0 and self.pred_evicted_ts[address] > self.sorted_list[0]:
                 self.phase_err_param = min(self.phase_err_param * 2, 100000000)
-                #rank = self.sorted_list.bisect_left(self.pred_evicted_ts[address])
-                #self.lru_budget += rank / self.cache_size_k
-                self.lru_budget = min(self.lru_budget + self.phase_err_param, 100000000)
+                rank = self.sorted_list.bisect_left(self.pred_evicted_ts[address])
+                self.rank_sum += rank
+                logger.info(f"rank: {rank}, sum of inversions: {self.rank_sum}")
+                self.lru_budget = 0
+                #self.lru_budget = min(self.lru_budget + self.phase_err_param, 100000000)
                 #self.lru_budget = 100000000
                 logger.info(f"reset lru_budget = {self.lru_budget}, phase_err_param = {self.phase_err_param}")
 
