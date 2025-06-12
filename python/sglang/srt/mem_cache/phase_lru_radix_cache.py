@@ -19,7 +19,7 @@ limitations under the License.
 The radix tree data structure for managing the KV cache.
 """
 
-from numba import njit
+import numpy as np
 import heapq
 import time
 import logging
@@ -58,7 +58,6 @@ class TreeNode:
         self.children = defaultdict(TreeNode)
         self.parent = None
         self.key = None
-        self.key_hash = None
         self.value = None
         self.lock_ref = 0
         self.last_access_ts = 0
@@ -96,14 +95,12 @@ def _key_match_page_size1(key0: List, key1: List):
         i += 1
     return i
 
-@njit
-def _key_match_page_size1_fast(key0: List, key1: List):
-    n = min(len(key0), len(key1))
-    for i in range(n):
-        if key0[i] != key1[i]:
-            return i
-    return n
-
+def _key_match_page_size1_fast(key0: List, key1: List) -> int:
+    a = np.asarray(key0)
+    b = np.asarray(key1)
+    n = min(len(a), len(b))
+    diff = a[:n] != b[:n]
+    return np.argmax(diff) if diff.any() else n
 
 def _key_match_paged(key0: List, key1: List, page_size: int):
     min_len = min(len(key0), len(key1))
@@ -161,7 +158,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             self.device = torch.device("cpu")
 
         if self.page_size == 1:
-            self.key_match_fn = _key_match_page_size1
+            self.key_match_fn = _key_match_page_size1_fast
             self.get_child_key_fn = lambda key: key[0]
         else:
             self.key_match_fn = partial(_key_match_paged, page_size=page_size)
@@ -235,7 +232,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         value = []
         while len(key) > 0 and child_key in node.children.keys():
             child = node.children[child_key]
-            prefix_len = self.key_match_fn(child.key, child.key_hash, key, hash(tuple(key)))
+            prefix_len = self.key_match_fn(child.key, key)
             if prefix_len < len(child.key):
                 original_key = child.key
                 new_node = self._split_node(child.key, child, prefix_len)
@@ -286,7 +283,7 @@ class PhaseLRURadixCache(BasePrefixCache):
                 self._predictor_access(node, self.current_ts)
                 self._record_access(node, node.last_access_ts, self.current_ts)
 
-            prefix_len = self.key_match_fn(node.key, node.key_hash, key, hash(tuple(key)))
+            prefix_len = self.key_match_fn(node.key, key)
             total_prefix_length += prefix_len
             key = key[prefix_len:]
             value = value[prefix_len:]
@@ -308,7 +305,6 @@ class PhaseLRURadixCache(BasePrefixCache):
             new_node = TreeNode()
             new_node.parent = node
             new_node.key = key
-            new_node.key_hash = hash(tuple(node.key))
             new_node.value = value
 
             # copy ts from parent node when spawning node
@@ -597,11 +593,9 @@ class PhaseLRURadixCache(BasePrefixCache):
         new_node.parent = child.parent
         new_node.lock_ref = child.lock_ref
         new_node.key = child.key[:split_len]
-        new_node.key_hash = hash(tuple(new_node.key))
         new_node.value = child.value[:split_len]
         child.parent = new_node
         child.key = child.key[split_len:]
-        child.key_hash = hash(tuple(child.key))
         child.value = child.value[split_len:]
         new_node.parent.children[self.get_child_key_fn(key)] = new_node
 
