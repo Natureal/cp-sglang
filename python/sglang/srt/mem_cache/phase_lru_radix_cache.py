@@ -192,7 +192,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         self.inv_count = 0
 
         self.phase_err_param = int(math.sqrt(self.phase_err_param))
-        self.sorted_list = SortedList()
+        #self.sorted_list = SortedList()
         self.lru_budget = 0
         
 
@@ -322,8 +322,8 @@ class PhaseLRURadixCache(BasePrefixCache):
         return total_prefix_length
     
     def _judge_evicted_in_phase(self, node: TreeNode):
-        #if self.degrade_to_lru == True or self.waiting_queue_cache == True:
-        #    return
+        if self.degrade_to_lru == True or self.waiting_queue_cache == True:
+            return
 
         address = hash(tuple(node.key))
         if address in self.pred_evicted_ts:
@@ -492,8 +492,8 @@ class PhaseLRURadixCache(BasePrefixCache):
             self._delete_leaf(x)
 
             if based_on_budget == True:
+                self.lru_evicted_ts[hash(tuple(x.key))] = self.current_ts
                 self.lru_budget -= 1
-            self.lru_evicted_ts[hash(tuple(x.key))] = self.current_ts
 
             if len(x.parent.children) == 0:
                 heapq.heappush(leaves, x.parent)
