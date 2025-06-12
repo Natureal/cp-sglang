@@ -222,6 +222,8 @@ class PhaseLRURadixCache(BasePrefixCache):
     
     def _match_prefix_helper(self, node: TreeNode, key: List):
         child_key = self.get_child_key_fn(key)
+        
+        logger.info(f"child_key = {str(child_key)}")
 
         value = []
         while len(key) > 0 and child_key in node.children.keys():
