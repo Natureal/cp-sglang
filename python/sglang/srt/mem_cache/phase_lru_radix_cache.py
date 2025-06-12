@@ -137,7 +137,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         self.lru_evicted_ts = {}
         self.inv_count = 0
         self.sorted_list = SortedList()
-        self.lru_budget = 0
+        self.lru_budget = 100000000
 
         # global-level
         self.deleted_node_count = 0
@@ -193,7 +193,7 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         self.phase_err_param = int(math.sqrt(self.phase_err_param))
         #self.sorted_list = SortedList()
-        self.lru_budget = 0
+        self.lru_budget = 100000000
         
 
     def match_prefix(self, key: List[int], **kwargs) -> Tuple[torch.Tensor, int]:
@@ -328,13 +328,13 @@ class PhaseLRURadixCache(BasePrefixCache):
         address = hash(tuple(node.key))
         if address in self.pred_evicted_ts:
             if len(self.sorted_list) > 0 and self.pred_evicted_ts[address] > self.sorted_list[0]:
-                self.phase_err_param = min(self.phase_err_param * 2, 100000000)
+                self.phase_err_param = min(self.phase_err_param * 1.5, 100000000)
                 rank = self.sorted_list.bisect_left(self.pred_evicted_ts[address])
                 self.rank_sum += rank
                 logger.info(f"rank: {rank}, sum of inversions: {self.rank_sum}")
                 #self.lru_budget = 0
-                self.lru_budget = min(self.lru_budget + self.phase_err_param, 100000000)
-                #self.lru_budget = 100000000
+                #self.lru_budget = min(self.lru_budget + self.phase_err_param, 100000000)
+                self.lru_budget = 100000000
                 logger.info(f"reset lru_budget = {self.lru_budget}, phase_err_param = {self.phase_err_param}")
 
         if address in self.lru_evicted_ts:
