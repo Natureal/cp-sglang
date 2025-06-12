@@ -19,6 +19,7 @@ limitations under the License.
 The radix tree data structure for managing the KV cache.
 """
 
+from numba import njit
 import heapq
 import time
 import logging
@@ -94,6 +95,14 @@ def _key_match_page_size1(key0: List, key1: List):
         i += 1
     return i
 
+@njit
+def _key_match_page_size1_fast(key0: List, key1: List):
+    n = min(len(key0), len(key1))
+    for i in range(n):
+        if key0[i] != key1[i]:
+            return i
+    return n
+
 
 def _key_match_paged(key0: List, key1: List, page_size: int):
     min_len = min(len(key0), len(key1))
@@ -152,7 +161,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             self.device = torch.device("cpu")
 
         if self.page_size == 1:
-            self.key_match_fn = _key_match_page_size1
+            self.key_match_fn = _key_match_page_size1_fast
             self.get_child_key_fn = lambda key: key[0]
         else:
             self.key_match_fn = partial(_key_match_paged, page_size=page_size)
@@ -413,7 +422,6 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         # The prefix indices could be updated, reuse it
         new_indices, new_last_node = self.match_prefix(page_aligned_token_ids)
-        logger.info(f"matched prefix: {str(new_indices)}")
         self.req_to_token_pool.write(
             (req.req_pool_idx, slice(len(req.prefix_indices), len(new_indices))),
             new_indices[len(req.prefix_indices) :],
