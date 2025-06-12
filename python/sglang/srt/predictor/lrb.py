@@ -93,12 +93,13 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
         self.trained = 1
 
     def feature_delete(self, address):
-        del self.access_time_dict[address]
-        for i in range(0, self.delta_nums):
-            del self.deltas[i][address]
-        for i in range(0, self.edc_nums):
-            del self.edcs[i][address]
-        del self.feature_history[address]
+        if address in self.access_time_dict:
+            self.access_time_dict.pop(address, None)
+            for i in range(0, self.delta_nums):
+                self.deltas[i].pop(address, None)
+            for i in range(0, self.edc_nums):
+                self.edcs[i].pop(address, None)
+            self.feature_history.pop(address, None)
 
     def feature_copy(self, address, new_address):
         # copy features from original address
