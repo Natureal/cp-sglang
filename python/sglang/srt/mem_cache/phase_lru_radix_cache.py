@@ -138,11 +138,15 @@ class PhaseLRURadixCache(BasePrefixCache):
         self.inv_count = 0
         self.sorted_list = SortedList()
         self.lru_budget = 0
+        self.lru_evict_count = 0
+        self.pred_evict_count = 0
 
         # global-level
         self.deleted_node_count = 0
         self.current_ts = 0
         self.rank_sum = 0
+        self.pred_rank_sum = 0
+        self.lru_rank_sum = 0
 
         self.waiting_queue_cache = waiting_queue_cache
 
@@ -330,19 +334,22 @@ class PhaseLRURadixCache(BasePrefixCache):
         address = hash(tuple(node.key))
         if address in self.pred_evicted_ts:
             if len(self.sorted_list) > 0 and self.pred_evicted_ts[address] > self.sorted_list[0]:
+                self.pred_evict_count += 1
                 self.phase_err_param = min(self.phase_err_param * 2, 100000000)
                 rank = self.sorted_list.bisect_left(self.pred_evicted_ts[address])
-                self.rank_sum += rank
-                logger.info(f"rank: {rank}, sum of inversions: {self.rank_sum}")
+                self.pred_rank_sum += rank
+                logger.info(f"rank: {rank}, sum of inversions: {self.pred_rank_sum}, pred avg inv = {self.pred_rank_sum / self.pred_evict_count}")
                 #self.lru_budget = 0
-                self.lru_budget = min(self.lru_budget + self.phase_err_param, 100000000)
+                #self.lru_budget = min(self.lru_budget + self.phase_err_param, 100000000)
+                self.lru_budget 
                 #self.lru_budget = 100000000
                 logger.info(f"reset lru_budget = {self.lru_budget}, phase_err_param = {self.phase_err_param}")
 
         if address in self.lru_evicted_ts:
+            self.lru_evict_count += 1
             rank = self.sorted_list.bisect_left(self.lru_evicted_ts[address])
-            self.rank_sum += rank
-            logger.info(f"lru_evicted, rank: {rank}, sum of inversions: {self.rank_sum}")
+            self.lru_rank_sum += rank
+            logger.info(f"lru_evicted, rank: {rank}, sum of inversions: {self.lru_rank_sum}, lru avg inv = {self.lru_rank_sum / self.lru_evict_count}")
 
     def set_algo_type(self, algo_type):
         if self.algo_type != algo_type:
