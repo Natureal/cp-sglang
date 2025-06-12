@@ -186,7 +186,7 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         self.phase_cache_k = TreeNode.counter - self.deleted_node_count
         self.distinct_element = set()
-        #self.evicted_ts = {}
+        self.pred_evicted_ts = {}
         self.inv_count = 0
 
         self.phase_err_param = int(math.sqrt(self.phase_err_param))
@@ -324,10 +324,10 @@ class PhaseLRURadixCache(BasePrefixCache):
             return
 
         address = hash(tuple(node.key))
-        if address in self.evicted_ts:
-            if len(self.sorted_list) > 0 and self.evicted_ts[address] > self.sorted_list[0]:
+        if address in self.pred_evicted_ts:
+            if len(self.sorted_list) > 0 and self.pred_evicted_ts[address] > self.sorted_list[0]:
                 self.phase_err_param = min(self.phase_err_param * 2, 100000000)
-                #rank = self.sorted_list.bisect_left(self.evicted_ts[address])
+                #rank = self.sorted_list.bisect_left(self.pred_evicted_ts[address])
                 #self.lru_budget += rank / self.cache_size_k
                 self.lru_budget = min(self.lru_budget + self.phase_err_param, 100000000)
                 #self.lru_budget = 100000000
@@ -509,7 +509,7 @@ class PhaseLRURadixCache(BasePrefixCache):
 
             self.token_to_kv_pool_allocator.free(x.value)
             num_evicted += len(x.value)
-            self.evicted_ts[hash(tuple(x.key))] = self.current_ts
+            self.pred_evicted_ts[hash(tuple(x.key))] = self.current_ts
             self._delete_leaf(x)
 
             if len(x.parent.children) == 0 and x.parent != self.root_node and x.parent.lock_ref == 0:
