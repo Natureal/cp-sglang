@@ -414,7 +414,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         # The prefix indices could be updated, reuse it
         new_indices, new_last_node = self.match_prefix(page_aligned_token_ids)
         logger.info(f"matched prefix: {str(new_indices)}")
-        self.req_to_token_pool.write(
+        self.req_to_token_pool.write(x
             (req.req_pool_idx, slice(len(req.prefix_indices), len(new_indices))),
             new_indices[len(req.prefix_indices) :],
         )
@@ -469,6 +469,8 @@ class PhaseLRURadixCache(BasePrefixCache):
             if x.lock_ref > 0:
                 continue
 
+            logger.info(f"evict one item")
+
             self.token_to_kv_pool_allocator.free(x.value)
             num_evicted += len(x.value)
             self._delete_leaf(x)
@@ -496,6 +498,8 @@ class PhaseLRURadixCache(BasePrefixCache):
             if x.lock_ref > 0:
                 continue
 
+            logger.info(f"evict one item")
+
             self.token_to_kv_pool_allocator.free(x.value)
             num_evicted += len(x.value)
             self.evicted_ts[hash(tuple(x.key))] = self.current_ts
@@ -509,6 +513,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         if self.disable:
             return
         
+        logger.info(f"start one eviction")
         self.current_ts += 1
         self.token_to_kv_pool_allocator.record_eviction(num_tokens)
 
