@@ -133,7 +133,8 @@ class PhaseLRURadixCache(BasePrefixCache):
         self.distinct_element = set()
         self.phase_cache_k = 1
         self.phase_err_param = 1
-        self.evicted_ts = {}
+        self.pred_evicted_ts = {}
+        self.lru_evicted_ts = {}
         self.inv_count = 0
         self.sorted_list = SortedList()
         self.lru_budget = 0
@@ -185,7 +186,7 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         self.phase_cache_k = TreeNode.counter - self.deleted_node_count
         self.distinct_element = set()
-        self.evicted_ts = {}
+        #self.evicted_ts = {}
         self.inv_count = 0
 
         self.phase_err_param = int(math.sqrt(self.phase_err_param))
