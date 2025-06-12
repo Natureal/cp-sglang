@@ -498,8 +498,6 @@ class PhaseLRURadixCache(BasePrefixCache):
             if x.lock_ref > 0:
                 continue
 
-            logger.info(f"evict one item")
-
             self.token_to_kv_pool_allocator.free(x.value)
             num_evicted += len(x.value)
             self.evicted_ts[hash(tuple(x.key))] = self.current_ts
@@ -512,14 +510,15 @@ class PhaseLRURadixCache(BasePrefixCache):
     def evict(self, num_tokens: int):
         if self.disable:
             return
-        
-        logger.info(f"start one eviction")
+
         self.current_ts += 1
         self.token_to_kv_pool_allocator.record_eviction(num_tokens)
 
         if self.degrade_to_lru == True:
             self._evict_by_lru(num_tokens)
             return
+        
+        self.token_to_kv_pool_allocator.free_group_begin()
         
         #logger.info(f"current lru budget = {self.lru_budget}")
         if  self.lru_budget >= 1:
@@ -528,6 +527,8 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         if num_tokens > 0:
             self._evict_by_pred(num_tokens)
+
+        self.token_to_kv_pool_allocator.free_group_end()
 
     def inc_lock_ref(self, node: TreeNode):
         if self.disable:
