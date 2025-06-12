@@ -226,7 +226,7 @@ class Scheduler(
 
         self.algo_type = "lru"
 
-        self.cache_type = "phaselru"
+        self.cache_type = "guard"
         self.cache_class_map = {
             "default": RadixCache,
             "phaselru": PhaseLRURadixCache,
