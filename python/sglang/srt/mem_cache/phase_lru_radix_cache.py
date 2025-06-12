@@ -137,7 +137,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         self.lru_evicted_ts = {}
         self.inv_count = 0
         self.sorted_list = SortedList()
-        self.lru_budget = 100000000
+        self.lru_budget = 0
 
         # global-level
         self.deleted_node_count = 0
@@ -193,7 +193,7 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         self.phase_err_param = int(math.sqrt(self.phase_err_param))
         #self.sorted_list = SortedList()
-        self.lru_budget = 100000000
+        self.lru_budget = 0
         
 
     def match_prefix(self, key: List[int], **kwargs) -> Tuple[torch.Tensor, int]:
