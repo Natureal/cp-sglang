@@ -627,7 +627,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             return
         self._predictor_feature_copy(original_key, node.key)
         self._predictor_feature_copy(original_key, new_node.key)
-        self.predictor.feature_delete(original_key)
+        self.predictor.feature_delete(hash(tuple(original_key)))
         # copy pred from original node
         new_node.pred_valid = node.pred_valid
         new_node.pred = node.pred
