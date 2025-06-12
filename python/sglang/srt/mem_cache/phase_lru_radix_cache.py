@@ -337,7 +337,7 @@ class PhaseLRURadixCache(BasePrefixCache):
                 logger.info(f"reset lru_budget = {self.lru_budget}, phase_err_param = {self.phase_err_param}")
 
         if address in self.lru_evicted_ts:
-            rank = self.sorted_list.bisect_left(self.pred_evicted_ts[address])
+            rank = self.sorted_list.bisect_left(self.lru_evicted_ts[address])
             self.rank_sum += rank
             logger.info(f"lru_evicted, rank: {rank}, sum of inversions: {self.rank_sum}")
 
