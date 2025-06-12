@@ -115,7 +115,6 @@ def _key_match_paged(key0: List, key1: List, page_size: int):
 
     return i
 
-
 class PhaseLRURadixCache(BasePrefixCache):
     def __init__(
         self,
@@ -161,7 +160,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             self.device = torch.device("cpu")
 
         if self.page_size == 1:
-            self.key_match_fn = _key_match_page_size1_fast
+            self.key_match_fn = _key_match_page_size1
             self.get_child_key_fn = lambda key: key[0]
         else:
             self.key_match_fn = partial(_key_match_paged, page_size=page_size)
@@ -630,6 +629,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             return
         self._predictor_feature_copy(original_key, node.key)
         self._predictor_feature_copy(original_key, new_node.key)
+        self.predictor.feature_delete(original_key)
         # copy pred from original node
         new_node.pred_valid = node.pred_valid
         new_node.pred = node.pred
