@@ -413,6 +413,7 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         # The prefix indices could be updated, reuse it
         new_indices, new_last_node = self.match_prefix(page_aligned_token_ids)
+        logger.info(f"matched prefix: {str(new_indices)}")
         self.req_to_token_pool.write(
             (req.req_pool_idx, slice(len(req.prefix_indices), len(new_indices))),
             new_indices[len(req.prefix_indices) :],
