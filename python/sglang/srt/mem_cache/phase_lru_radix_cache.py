@@ -159,7 +159,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             self.device = torch.device("cpu")
 
         if self.page_size == 1:
-            self.key_match_fn = _key_match_page_size1_fast
+            self.key_match_fn = _key_match_page_size1
             self.get_child_key_fn = lambda key: key[0]
         else:
             self.key_match_fn = partial(_key_match_paged, page_size=page_size)
