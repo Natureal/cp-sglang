@@ -1884,6 +1884,9 @@ class Scheduler(
             self.req_to_token_pool.clear()
             self.token_to_kv_pool_allocator.clear()
 
+            self.stats.cache_hit_total_num = 0
+            self.stats.cache_req_total_num = 0
+
             if not self.spec_algorithm.is_none():
                 self.draft_worker.model_runner.req_to_token_pool.clear()
                 self.draft_worker.model_runner.token_to_kv_pool_allocator.clear()
