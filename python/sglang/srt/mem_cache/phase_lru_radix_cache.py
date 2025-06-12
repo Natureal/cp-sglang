@@ -336,6 +336,11 @@ class PhaseLRURadixCache(BasePrefixCache):
                 #self.lru_budget = 100000000
                 logger.info(f"reset lru_budget = {self.lru_budget}, phase_err_param = {self.phase_err_param}")
 
+        if address in self.lru_evicted_ts:
+            rank = self.sorted_list.bisect_left(self.pred_evicted_ts[address])
+            self.rank_sum += rank
+            logger.info(f"lru_evicted, rank: {rank}, sum of inversions: {self.rank_sum}")
+
     def set_algo_type(self, algo_type):
         if self.algo_type != algo_type:
             self.algo_type = algo_type
@@ -486,6 +491,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             self._delete_leaf(x)
 
             if based_on_budget == True:
+                self.lru_evicted_ts[hash(tuple(x.key))] = self.current_ts
                 self.lru_budget -= 1
 
             if len(x.parent.children) == 0:
