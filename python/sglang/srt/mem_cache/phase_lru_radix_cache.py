@@ -234,22 +234,23 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         value = []
         while len(key) > 0 and child_key in node.children.keys():
-            child = node.children[child_key]
-            prefix_len = self.key_match_fn(child.key, key)
-            if prefix_len < len(child.key):
-                original_key = child.key
-                new_node = self._split_node(child.key, child, prefix_len)
+            node = node.children[child_key]
+            prefix_len = self.key_match_fn(node.key, key)
+            if prefix_len < len(node.key):
+                # originial_key is splitted into node.key and new_node.key
+                # node spawns new_node
+                original_key = node.key
+                new_node = self._split_node(node.key, node, prefix_len)
                 self._predictor_split(original_key, node, new_node)
-                # copy ts from node when splitting node
                 self._record_access(new_node, None, node.last_access_ts)
-                self._judge_evicted_in_phase(new_node)
+                #self._judge_evicted_in_phase(node)
+                #self._judge_evicted_in_phase(new_node)
 
                 value.append(new_node.value)
                 node = new_node
                 break
             else:
-                value.append(child.value)
-                node = child
+                value.append(node.value)
                 key = key[prefix_len:]
 
                 if len(key):
@@ -295,8 +296,9 @@ class PhaseLRURadixCache(BasePrefixCache):
                 original_key = node.key
                 new_node = self._split_node(node.key, node, prefix_len)
                 self._predictor_split(original_key, node, new_node)
-                # copy ts from node when splitting node
+                # originial_key is splitted into node.key and new_node.key
                 self._record_access(new_node, None, node.last_access_ts)
+                self._judge_evicted_in_phase(node)
                 self._judge_evicted_in_phase(new_node)
 
                 node = new_node
@@ -328,7 +330,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         address = hash(tuple(node.key))
         if address in self.pred_evicted_ts:
             if len(self.sorted_list) > 0 and self.pred_evicted_ts[address] > self.sorted_list[0]:
-                self.phase_err_param = min(self.phase_err_param * 1.5, 100000000)
+                self.phase_err_param = min(self.phase_err_param * 2, 100000000)
                 rank = self.sorted_list.bisect_left(self.pred_evicted_ts[address])
                 self.rank_sum += rank
                 logger.info(f"rank: {rank}, sum of inversions: {self.rank_sum}")

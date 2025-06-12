@@ -196,17 +196,17 @@ class GuardRadixCache(BasePrefixCache):
 
         value = []
         while len(key) > 0 and child_key in node.children.keys():
-            child = node.children[child_key]
+            node = node.children[child_key]
             
             if self.degrade_to_lru == False:
                 # GUARD: Track access to child node
-                if child in self.U:
-                    self.U.remove(child)
+                if node in self.U:
+                    self.U.remove(node)
             
-            prefix_len = self.key_match_fn(child.key, key)
-            if prefix_len < len(child.key):
-                original_key = child.key
-                new_node = self._split_node(child.key, child, prefix_len)
+            prefix_len = self.key_match_fn(node.key, key)
+            if prefix_len < len(node.key):
+                original_key = node.key
+                new_node = self._split_node(node.key, node, prefix_len)
                 self._predictor_split(original_key, node, new_node)
                 # copy ts from node when splitting node
                 new_node.last_access_ts = node.last_access_ts
@@ -215,8 +215,7 @@ class GuardRadixCache(BasePrefixCache):
                 node = new_node
                 break
             else:
-                value.append(child.value)
-                node = child
+                value.append(node.value)
                 key = key[prefix_len:]
 
                 if len(key):
