@@ -223,7 +223,7 @@ class PhaseLRURadixCache(BasePrefixCache):
     def _match_prefix_helper(self, node: TreeNode, key: List):
         child_key = self.get_child_key_fn(key)
         
-        logger.info(f"child_key = {str(child_key)}")
+        logger.info(f"key = {str(key)}")
 
         value = []
         while len(key) > 0 and child_key in node.children.keys():
@@ -470,8 +470,6 @@ class PhaseLRURadixCache(BasePrefixCache):
                 break
             if x.lock_ref > 0:
                 continue
-
-            logger.info(f"evict one item")
 
             self.token_to_kv_pool_allocator.free(x.value)
             num_evicted += len(x.value)
