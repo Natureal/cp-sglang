@@ -253,7 +253,7 @@ class WorkloadGenerator:
             self.stress_test_data = deque(pickle.load(f))
             print(f"len of data: {len(self.stress_test_data)}")
             for item in self.stress_test_data:
-                print(f"item: {item}")
+                print(f"item: {self.tokenizer.decode(item)}")
 
         if self.load_local and os.path.exists("synthetic_multiturn_256_requests.pkl"):
              with open('synthetic_multiturn_256_requests.pkl', 'rb') as f:
