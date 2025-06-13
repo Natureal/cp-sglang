@@ -228,16 +228,16 @@ class ReadyQueue:
 
 class WorkloadGenerator:
     def process_stress_test_data(self):
+        total_items = []
         for i in range(271):
-            total_items = []
             with open('2108_dump_req_keys_' + str(i) + '.pkl', 'rb') as f:
                 self.stress_test_data = deque(pickle.load(f))
                 for item in self.stress_test_data:
                     total_items.append(self.tokenizer.decode(item))
                 print(f"current len of total_items: {len(total_items)}")
 
-            with open('stress_test_prompt_list.pkl', 'wb') as f:
-                pickle.dump(total_items, f)
+        with open('stress_test_prompt_list.pkl', 'wb') as f:
+            pickle.dump(total_items, f)
 
     def __init__(self, args):
         # Construct the base URL for requests
