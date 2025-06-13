@@ -257,13 +257,13 @@ class WorkloadGenerator:
         self.concatenate_num = 1
         self.extra_needed_prompts = self.concatenate_num * self.num_system_prefix_prompts
         
-        self.sync_send_req_set = []
+        self.sync_send_req_set = deque()
         self.load_local = False
         self.load_stress_test = True
 
         if self.load_stress_test and os.path.exists("stress_test_prompt_list.pkl"):
              with open('stress_test_prompt_list.pkl', 'rb') as f:
-                prompt_list = deque(pickle.load(f))
+                prompt_list = pickle.load(f)
                 for prompt in prompt_list:
                     self.sync_send_req_set.append((1, prompt))
         else:
