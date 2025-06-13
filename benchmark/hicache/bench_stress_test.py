@@ -226,7 +226,7 @@ class ReadyQueue:
                 # todo, varying thinking time of clients
                 raise ValueError(f"{self.policy} not implemented")
 
-def process_stress_test_data():
+def process_stress_test_data(self):
     for i in range(271):
         total_items = []
         with open('2108_dump_req_keys_' + str(i) + '.pkl', 'rb') as f:
@@ -265,7 +265,8 @@ class WorkloadGenerator:
              with open('stress_test_prompt_list.pkl', 'rb') as f:
                 prompt_list = pickle.load(f)
                 for prompt in prompt_list:
-                    self.sync_send_req_set.append((1, self.tokenizer.decode(prompt)))
+                    print(f"prompt: {prompt}")
+                    self.sync_send_req_set.append((1, prompt))
         else:
             if self.load_local and os.path.exists("candidate_inputs.pkl"):
                 with open('candidate_inputs.pkl', 'rb') as f:
