@@ -265,7 +265,7 @@ class WorkloadGenerator:
              with open('stress_test_prompt_list.pkl', 'rb') as f:
                 prompt_list = pickle.load(f)
                 for prompt in prompt_list:
-                    self.sync_send_req_set.append((1, prompt))
+                    self.sync_send_req_set.append((1, self.tokenizer.decode(prompt)))
         else:
             if self.load_local and os.path.exists("candidate_inputs.pkl"):
                 with open('candidate_inputs.pkl', 'rb') as f:
