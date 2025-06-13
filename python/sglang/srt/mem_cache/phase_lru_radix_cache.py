@@ -422,7 +422,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         token_ids = req.fill_ids
         self.dump_req_keys.append(token_ids)
         if len(self.dump_req_keys) >= 100:
-            file_name = 'dump_req_keys_' + str(self.dump_file_count) + '.pkl'
+            file_name = 'sglang/dump_req_keys_' + str(self.dump_file_count) + '.pkl'
             self.dump_file_count += 1
             with open(file_name, 'wb') as f:
                 pickle.dump(self.dump_req_keys, f)
