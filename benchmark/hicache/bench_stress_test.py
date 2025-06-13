@@ -263,7 +263,9 @@ class WorkloadGenerator:
 
         if self.load_stress_test and os.path.exists("stress_test_prompt_list.pkl"):
              with open('stress_test_prompt_list.pkl', 'rb') as f:
-                self.sync_send_req_set = deque(pickle.load(f))
+                prompt_list = deque(pickle.load(f))
+                for prompt in prompt_list:
+                    self.sync_send_req_set.append((1, prompt))
         else:
             if self.load_local and os.path.exists("candidate_inputs.pkl"):
                 with open('candidate_inputs.pkl', 'rb') as f:
