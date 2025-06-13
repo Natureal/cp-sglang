@@ -257,7 +257,7 @@ class WorkloadGenerator:
         self.concatenate_num = 1
         self.extra_needed_prompts = self.concatenate_num * self.num_system_prefix_prompts
         
-        self.sync_send_req_set = None
+        self.sync_send_req_set = []
         self.load_local = False
         self.load_stress_test = True
 
