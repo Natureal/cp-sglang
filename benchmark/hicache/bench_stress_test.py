@@ -226,19 +226,19 @@ class ReadyQueue:
                 # todo, varying thinking time of clients
                 raise ValueError(f"{self.policy} not implemented")
 
-def process_stress_test_data(self):
-    for i in range(271):
-        total_items = []
-        with open('2108_dump_req_keys_' + str(i) + '.pkl', 'rb') as f:
-            self.stress_test_data = deque(pickle.load(f))
-            for item in self.stress_test_data:
-                total_items.append(self.tokenizer.decode(item))
-            print(f"current len of total_items: {len(total_items)}")
-
-        with open('stress_test_prompt_list.pkl', 'wb') as f:
-            pickle.dump(total_items, f)
-
 class WorkloadGenerator:
+    def process_stress_test_data(self):
+        for i in range(271):
+            total_items = []
+            with open('2108_dump_req_keys_' + str(i) + '.pkl', 'rb') as f:
+                self.stress_test_data = deque(pickle.load(f))
+                for item in self.stress_test_data:
+                    total_items.append(self.tokenizer.decode(item))
+                print(f"current len of total_items: {len(total_items)}")
+
+            with open('stress_test_prompt_list.pkl', 'wb') as f:
+                pickle.dump(total_items, f)
+
     def __init__(self, args):
         # Construct the base URL for requests
         self.url = f"http://{args.host}:{args.port}/generate"
@@ -260,6 +260,8 @@ class WorkloadGenerator:
         self.sync_send_req_set = deque()
         self.load_local = False
         self.load_stress_test = True
+
+        self.process_stress_test_data()
 
         if self.load_stress_test and os.path.exists("stress_test_prompt_list.pkl"):
             with open('stress_test_prompt_list.pkl', 'rb') as f:
