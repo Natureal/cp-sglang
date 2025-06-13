@@ -262,7 +262,7 @@ class WorkloadGenerator:
         self.load_stress_test = True
 
         if self.load_stress_test and os.path.exists("stress_test_prompt_list.pkl"):
-             with open('stress_test_prompt_list.pkl', 'rb') as f:
+            with open('stress_test_prompt_list.pkl', 'rb') as f:
                 prompt_list = pickle.load(f)
                 for prompt in prompt_list:
                     #print(f"prompt: {prompt}")
