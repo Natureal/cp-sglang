@@ -423,7 +423,7 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         token_ids = req.fill_ids
         self.dump_req_keys.append(token_ids)
-        if len(self.dump_req_keys) >= 100:
+        if len(self.dump_req_keys) >= 20:
             file_name = str(self.rand) + '_dump_req_keys_' + str(self.dump_file_count) + '.pkl'
             self.dump_file_count += 1
             with open(file_name, 'wb') as f:
