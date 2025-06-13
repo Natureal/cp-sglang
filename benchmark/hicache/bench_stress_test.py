@@ -249,7 +249,7 @@ class WorkloadGenerator:
         self.synthetic_multiturn_requests = None
         self.load_local = False
 
-        with open('2108_dump_req_keys_0.pkl') as f:
+        with open('2108_dump_req_keys_0.pkl', 'rb') as f:
             self.stress_test_data = deque(pickle.load(f))
             print(f"len of data: {len(self.stress_test_data)}")
             print(f"item: {self.stress_test_data[0]}")
