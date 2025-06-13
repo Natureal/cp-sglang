@@ -249,11 +249,16 @@ class WorkloadGenerator:
         self.synthetic_multiturn_requests = None
         self.load_local = False
 
-        with open('2108_dump_req_keys_0.pkl', 'rb') as f:
-            self.stress_test_data = deque(pickle.load(f))
-            print(f"len of data: {len(self.stress_test_data)}")
-            for item in self.stress_test_data:
-                print(f"item: {self.tokenizer.decode(item)}")
+        for i in range(271):
+            total_items = []
+            with open('2108_dump_req_keys_' + str(i) + '.pkl', 'rb') as f:
+                self.stress_test_data = deque(pickle.load(f))
+                print(f"len of data: {len(self.stress_test_data)}")
+                for item in self.stress_test_data:
+                    total_items.append(self.tokenizer.decode(item))
+
+            with open('stress_test_prompt_list.pkl', 'wb') as f:
+                    pickle.dump(total_items, f)
 
         if self.load_local and os.path.exists("synthetic_multiturn_256_requests.pkl"):
              with open('synthetic_multiturn_256_requests.pkl', 'rb') as f:
