@@ -21,6 +21,7 @@ The radix tree data structure for managing the KV cache.
 
 import numpy as np
 import heapq
+import random
 import pickle
 import time
 import logging
@@ -143,6 +144,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         self.pred_evict_count = 0
         self.dump_file_count = 0
         self.dump_req_keys = []
+        self.rand = random.randint(0, 10000)
 
         # global-level
         self.deleted_node_count = 0
@@ -422,7 +424,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         token_ids = req.fill_ids
         self.dump_req_keys.append(token_ids)
         if len(self.dump_req_keys) >= 100:
-            file_name = 'sglang/dump_req_keys_' + str(self.dump_file_count) + '.pkl'
+            file_name = str(self.rand) + 'sglang/dump_req_keys_' + str(self.dump_file_count) + '.pkl'
             self.dump_file_count += 1
             with open(file_name, 'wb') as f:
                 pickle.dump(self.dump_req_keys, f)
