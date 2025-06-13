@@ -265,8 +265,11 @@ class WorkloadGenerator:
              with open('stress_test_prompt_list.pkl', 'rb') as f:
                 prompt_list = pickle.load(f)
                 for prompt in prompt_list:
-                    print(f"prompt: {prompt}")
+                    #print(f"prompt: {prompt}")
                     self.sync_send_req_set.append((1, gen_payload(prompt, args.output_length)))
+
+            print(f"total number of sync reqs: {len(self.sync_send_req_set)}")
+    
         else:
             if self.load_local and os.path.exists("candidate_inputs.pkl"):
                 with open('candidate_inputs.pkl', 'rb') as f:
@@ -328,7 +331,7 @@ class WorkloadGenerator:
     def sync_request_sender(self):
         async def request_loop():
             while True:
-                #print(f"sync send reqs")
+                print(f"sync send reqs")
                 if len(self.sync_send_req_set) > 0 \
                     and self.sent_requests - self.completed_requests < args.max_parallel:
                     new_request = self.sync_send_req_set.popleft()
@@ -339,7 +342,7 @@ class WorkloadGenerator:
                     await asyncio.sleep(0.05)
                     continue
                 
-                print(f"self.pbar.n : {self.pbar.n }")
+                #print(f"self.pbar.n : {self.pbar.n }")
 
                 if self.pbar.n >= self.pbar.total:
                     break
