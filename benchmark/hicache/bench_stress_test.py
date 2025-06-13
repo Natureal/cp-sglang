@@ -266,7 +266,7 @@ class WorkloadGenerator:
                 prompt_list = pickle.load(f)
                 for prompt in prompt_list:
                     print(f"prompt: {prompt}")
-                    self.sync_send_req_set.append((1, prompt))
+                    self.sync_send_req_set.append((1, gen_payload(prompt, args.output_length)))
         else:
             if self.load_local and os.path.exists("candidate_inputs.pkl"):
                 with open('candidate_inputs.pkl', 'rb') as f:
