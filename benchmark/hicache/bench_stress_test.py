@@ -226,6 +226,17 @@ class ReadyQueue:
                 # todo, varying thinking time of clients
                 raise ValueError(f"{self.policy} not implemented")
 
+def process_stress_test_data():
+    for i in range(271):
+        total_items = []
+        with open('2108_dump_req_keys_' + str(i) + '.pkl', 'rb') as f:
+            self.stress_test_data = deque(pickle.load(f))
+            print(f"len of data: {len(self.stress_test_data)}")
+            for item in self.stress_test_data:
+                total_items.append(self.tokenizer.decode(item))
+
+        with open('stress_test_prompt_list.pkl', 'wb') as f:
+                pickle.dump(total_items, f)
 
 class WorkloadGenerator:
     def __init__(self, args):
@@ -246,23 +257,13 @@ class WorkloadGenerator:
         self.concatenate_num = 1
         self.extra_needed_prompts = self.concatenate_num * self.num_system_prefix_prompts
         
-        self.synthetic_multiturn_requests = None
+        self.sync_send_req_set = None
         self.load_local = False
+        self.load_stress_test = True
 
-        for i in range(271):
-            total_items = []
-            with open('2108_dump_req_keys_' + str(i) + '.pkl', 'rb') as f:
-                self.stress_test_data = deque(pickle.load(f))
-                print(f"len of data: {len(self.stress_test_data)}")
-                for item in self.stress_test_data:
-                    total_items.append(self.tokenizer.decode(item))
-
-            with open('stress_test_prompt_list.pkl', 'wb') as f:
-                    pickle.dump(total_items, f)
-
-        if self.load_local and os.path.exists("synthetic_multiturn_256_requests.pkl"):
-             with open('synthetic_multiturn_256_requests.pkl', 'rb') as f:
-                self.synthetic_multiturn_requests = deque(pickle.load(f))
+        if self.load_stress_test and os.path.exists("stress_test_prompt_list.pkl"):
+             with open('stress_test_prompt_list.pkl', 'rb') as f:
+                self.sync_send_req_set = deque(pickle.load(f))
         else:
             if self.load_local and os.path.exists("candidate_inputs.pkl"):
                 with open('candidate_inputs.pkl', 'rb') as f:
@@ -325,12 +326,12 @@ class WorkloadGenerator:
         async def request_loop():
             while True:
                 #print(f"sync send reqs")
-                if len(self.synthetic_multiturn_requests) > 0 \
+                if len(self.sync_send_req_set) > 0 \
                     and self.sent_requests - self.completed_requests < args.max_parallel:
-                    new_request = self.synthetic_multiturn_requests.popleft()
+                    new_request = self.sync_send_req_set.popleft()
                     asyncio.create_task(self.handle_request(new_request))
                     self.sent_requests += 1
-                    await asyncio.sleep(0.2)
+                    await asyncio.sleep(0.1)
                 else:
                     await asyncio.sleep(0.05)
                     continue
@@ -446,8 +447,8 @@ class WorkloadGenerator:
                     break
 
     def run(self):
-        if self.synthetic_multiturn_requests is not None:
-            print(f"sync send requests, total = {len(self.synthetic_multiturn_requests)}")
+        if self.sync_send_req_set is not None:
+            print(f"sync send requests, total = {len(self.sync_send_req_set)}")
             sync_request_thread = threading.Thread(target=self.sync_request_sender, daemon=True)
             sync_response_thread = threading.Thread(target=self.sync_response_handler, daemon=True)
 
@@ -509,11 +510,6 @@ class WorkloadGenerator:
             f"  Throughput: {performance_data['summary']['throughput']:.2f} requests per second"
         )
         log_to_jsonl_file(performance_data, args.log_file)
-
-        if self.synthetic_multiturn_requests is None:
-            num_req = len(request_history)
-            with open(f"synthetic_multiturn_{num_req}_requests.pkl", 'wb') as f:
-                pickle.dump(request_history, f)
 
 if __name__ == "__main__":
     args = parse_args()
