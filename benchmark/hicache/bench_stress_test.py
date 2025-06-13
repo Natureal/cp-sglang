@@ -231,12 +231,12 @@ def process_stress_test_data(self):
         total_items = []
         with open('2108_dump_req_keys_' + str(i) + '.pkl', 'rb') as f:
             self.stress_test_data = deque(pickle.load(f))
-            print(f"len of data: {len(self.stress_test_data)}")
             for item in self.stress_test_data:
                 total_items.append(self.tokenizer.decode(item))
+            print(f"current len of total_items: {len(total_items)}")
 
         with open('stress_test_prompt_list.pkl', 'wb') as f:
-                pickle.dump(total_items, f)
+            pickle.dump(total_items, f)
 
 class WorkloadGenerator:
     def __init__(self, args):
