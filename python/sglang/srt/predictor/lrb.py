@@ -42,9 +42,9 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
 
         # online training
         self.training_config = model_config['training']
-        self.training_interval = 5000
+        self.training_interval = 10000
         self.training_accumu_num = 0
-        self.training_window = 10000
+        self.training_window = 100000
         self.existing_online_training = 0
         self.feature_history = {}
         self.features = collections.deque()
