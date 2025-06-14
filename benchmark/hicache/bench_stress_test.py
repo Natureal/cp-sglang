@@ -315,7 +315,10 @@ class WorkloadGenerator:
             self.candidate_inputs = self.candidate_inputs[args.num_clients :]
 
         self.response_queue = queue.Queue()
-        self.pbar = tqdm(total=args.num_clients * args.num_rounds-10)
+        if self.sync_send_req_set is not None:
+            self.pbar = tqdm(total = len(self.sync_send_req_set))
+        else:
+            self.pbar = tqdm(total=args.num_clients * args.num_rounds)
         self.performance_metrics = {"ttft": [], "latency": []}
 
     async def handle_request(self, item):
@@ -333,7 +336,7 @@ class WorkloadGenerator:
     def sync_request_sender(self):
         async def request_loop():
             while True:
-                print(f"sync send reqs")
+                #print(f"sync send reqs")
                 if len(self.sync_send_req_set) > 0 \
                     and self.sent_requests - self.completed_requests < args.max_parallel:
                     new_request = self.sync_send_req_set.popleft()
