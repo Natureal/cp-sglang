@@ -316,7 +316,7 @@ class WorkloadGenerator:
 
         self.response_queue = queue.Queue()
         if self.sync_send_req_set is not None:
-            self.pbar = tqdm(total = len(self.sync_send_req_set))
+            self.pbar = tqdm(total = len(self.sync_send_req_set)-100)
         else:
             self.pbar = tqdm(total=args.num_clients * args.num_rounds-100)
         self.performance_metrics = {"ttft": [], "latency": []}
