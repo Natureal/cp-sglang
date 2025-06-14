@@ -695,10 +695,10 @@ class PhaseLRURadixCache(BasePrefixCache):
         while stack:
             current_node, current_indent = stack.pop()
             print(
-                " " * current_indent,
-                len(current_node.key),
-                current_node.key[:10],
-                f"r={current_node.lock_ref}",
+                "--" * current_indent,
+                f"node_id ({current_node.id}), depth ({current_indent / 2}), #keys {len(current_node.key)}",
+                #current_node.key[:10],
+                #f"r={current_node.lock_ref}",
             )
             for key, child in current_node.children.items():
                 stack.append((child, current_indent + 2))
