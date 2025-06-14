@@ -84,7 +84,7 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
         self.existing_online_training = 1
         start = time.time()
         model = await asyncio.to_thread(self._training_task)
-        model.save_model(self._model_save_path)
+        model.save_model(self._model_save_path, num_iteration=model.best_iteration)
         end = time.time()
         logger.info(f"training time cost = {end - start}, #features = {len(self.features)}, interval = {self.training_interval}")
         

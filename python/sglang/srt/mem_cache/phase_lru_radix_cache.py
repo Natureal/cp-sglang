@@ -385,10 +385,10 @@ class PhaseLRURadixCache(BasePrefixCache):
 
     def cache_finished_req(self, req: Req):
         """Cache request when it finishes."""
-        #if self.current_ts % 100 == 0:
-        #    logger.info(f"current ts: {self.current_ts}")
-        #    captured = self._capture_print()
-        #    logger.info(f"---------------------------------------------------- tree structure: {captured}")
+        if self.current_ts % 100 == 0:
+            logger.info(f"current ts: {self.current_ts}")
+            captured = self._capture_print()
+            logger.info(f"---------------------------------------------------- tree structure: {captured}")
 
         if self.disable:
             kv_indices = self.req_to_token_pool.req_to_token[
