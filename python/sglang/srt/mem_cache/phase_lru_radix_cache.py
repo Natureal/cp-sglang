@@ -24,6 +24,8 @@ import heapq
 import random
 import pickle
 import time
+import sys
+import io
 import logging
 import math
 from collections import defaultdict
@@ -383,6 +385,11 @@ class PhaseLRURadixCache(BasePrefixCache):
 
     def cache_finished_req(self, req: Req):
         """Cache request when it finishes."""
+        if self.current_ts % 100 == 0:
+            logger.info(f"current ts: {self.current_ts}")
+            captured = self._capture_print()
+            logger.info(f"---------------------------------------------------- tree structure: {captured}")
+
         if self.disable:
             kv_indices = self.req_to_token_pool.req_to_token[
                 req.req_pool_idx, : len(req.origin_input_ids) + len(req.output_ids) - 1
@@ -422,13 +429,13 @@ class PhaseLRURadixCache(BasePrefixCache):
             return
 
         token_ids = req.fill_ids
-        self.dump_req_keys.append(token_ids)
-        if len(self.dump_req_keys) >= 20:
-            file_name = str(self.rand) + '_dump_req_keys_' + str(self.dump_file_count) + '.pkl'
-            self.dump_file_count += 1
-            with open(file_name, 'wb') as f:
-                pickle.dump(self.dump_req_keys, f)
-            self.dump_req_keys = []
+        #self.dump_req_keys.append(token_ids)
+        #if len(self.dump_req_keys) >= 20:
+        #    file_name = str(self.rand) + '_dump_req_keys_' + str(self.dump_file_count) + '.pkl'
+        #    self.dump_file_count += 1
+        #    with open(file_name, 'wb') as f:
+        #        pickle.dump(self.dump_req_keys, f)
+        #    self.dump_req_keys = []
 
         kv_indices = self.req_to_token_pool.req_to_token[
             req.req_pool_idx, : len(token_ids)
@@ -470,6 +477,13 @@ class PhaseLRURadixCache(BasePrefixCache):
     def pretty_print(self):
         self._print_helper(self.root_node, 0)
         print(f"#tokens: {self.total_size()}")
+
+    def _capture_print(self):
+        buffer = io.StringIO()
+        sys.stdout = buffer
+        self.pretty_print()
+        sys.stdout = sys.__stdout__
+        return buffer.getvalue()
 
     def total_size(self):
         return self._total_size_helper()
