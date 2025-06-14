@@ -318,7 +318,7 @@ class WorkloadGenerator:
         if self.sync_send_req_set is not None:
             self.pbar = tqdm(total = len(self.sync_send_req_set))
         else:
-            self.pbar = tqdm(total=args.num_clients * args.num_rounds)
+            self.pbar = tqdm(total=args.num_clients * args.num_rounds-100)
         self.performance_metrics = {"ttft": [], "latency": []}
 
     async def handle_request(self, item):
