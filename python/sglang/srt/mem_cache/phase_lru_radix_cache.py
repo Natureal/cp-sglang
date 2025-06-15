@@ -29,7 +29,7 @@ import io
 import os
 import logging
 import math
-from collections import defaultdict
+from collections import defaultdict, deque
 from functools import partial
 from typing import TYPE_CHECKING, List, Optional, Tuple
 from sortedcontainers import SortedList
@@ -756,11 +756,29 @@ if __name__ == "__main__":
                 sync_send_req_set.append(prompt)
         print(f"total number of sync reqs: {len(sync_send_req_set)}")
     
-    for i in range(10):
-        tree.insert(sync_send_req_set[i])
+    NRT = {}
+    current_ts = 0
+    for i in range(len(sync_send_req_set)):
+        current_ts += 1
         for id in sync_send_req_set[i]:
-            print(type(id))
-        print("\n")
+            if id not in NRT:
+                NRT[id] = deque()
+            NRT[id].append(current_ts)
+
+    total_size = 21000
+    req_count = 0
+    for req in sync_send_req_set:
+        current_size = TreeNode.counter - tree.deleted_node_count
+        if current_size + len(req) > total_size:
+            tree.evict(len(req))
+
+        for id in req:
+            NRT[id].popleft()
+        tree.insert(req)
+
+        req_count += 1
+        if req_count >= 100:
+            break
 
     tree.pretty_print()
 
