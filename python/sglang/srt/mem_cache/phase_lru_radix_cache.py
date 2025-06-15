@@ -808,7 +808,7 @@ if __name__ == "__main__":
                 NRT[id] = deque()
             NRT[id].append(current_ts)
 
-    total_size = 40000
+    total_size = 80000
     req_count = 0
     current_size = 0
     total_hit_id_count = 0
