@@ -163,9 +163,9 @@ class PhaseLRURadixCache(BasePrefixCache):
         self.algo_type = "lru"
         self.degrade_to_lru = True
 
-        #self.predictor = POPUPredictor()
+        self.predictor = POPUPredictor()
         #self.predictor = PLECOPredictor()
-        self.predictor = LRBReuseDistancePredictor()
+        #self.predictor = LRBReuseDistancePredictor()
 
         if self.token_to_kv_pool_allocator:
             self.device = self.token_to_kv_pool_allocator.device
@@ -788,9 +788,10 @@ class PhaseLRURadixCache(BasePrefixCache):
 
 if __name__ == "__main__":
     tree = PhaseLRURadixCache(None, None, page_size=1, disable=False)
-    #tree.set_algo_type("phaselru")
+    tree.set_algo_type("phaselru") #popu
     #tree.set_algo_type("lru")
-    tree.set_algo_type("belady")
+    #tree.set_algo_type("belady")
+    #tree.set_algo_type("belady") 
 
     sync_send_req_set = []
     if os.path.exists("stress_test_token_id.pkl"):
