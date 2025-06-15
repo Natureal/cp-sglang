@@ -494,14 +494,13 @@ class PhaseLRURadixCache(BasePrefixCache):
     def total_size(self):
         return self._total_size_helper()
     
-    def belady_predict(key):
+    def belady_predict(self, key):
         return NRT[key].popleft()
 
     def _predict(self, nodes: List[TreeNode]):
         if self.algo_type == "belady":
             for node in nodes:
                 if node.pred_valid == 0:
-                    print(f"node key 0 = {str(node.key[0])}")
                     node.pred = self.belady_predict(node.key[0])
                     node.pred_valid = 1
             return
