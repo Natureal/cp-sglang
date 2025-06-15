@@ -71,6 +71,8 @@ class TreeNode:
         self.pred_valid = 0
         self.access_times = 0
 
+        self.prefix_key = None
+
         self.hit_count = 0
         # indicating the node is loading KV cache from host
         self.loading = False
@@ -324,6 +326,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             new_node = TreeNode()
             new_node.parent = node
             new_node.key = key
+            new_node.prefix_key = node.prefix_key + node.key
             new_node.value = value
             self._predictor_spawn(node, new_node)
             # copy ts from parent node when spawning node
@@ -681,9 +684,11 @@ class PhaseLRURadixCache(BasePrefixCache):
         new_node.parent = child.parent
         new_node.lock_ref = child.lock_ref
         new_node.key = child.key[:split_len]
+        new_node.prefix_key = child.prefix_key # added
         new_node.value = child.value[:split_len]
         child.parent = new_node
         child.key = child.key[split_len:]
+        child.prefix_key = child.prefix_key + new_node.key
         child.value = child.value[split_len:]
         new_node.parent.children[self.get_child_key_fn(key)] = new_node
 
@@ -801,12 +806,13 @@ if __name__ == "__main__":
         print(f"total number of sync reqs: {len(sync_send_req_set)}")
 
     current_ts = 0
-    for i in range(len(sync_send_req_set)):
+    for req in sync_send_req_set:
         current_ts += 1
-        for id in sync_send_req_set[i]:
-            if id not in NRT:
-                NRT[id] = deque()
-            NRT[id].append(current_ts)
+        for j in range(len(req)):
+            prefix_hash = hash(tuple(req[:j + 1]))
+            if prefix_hash not in NRT:
+                NRT[prefix_hash] = deque()
+            NRT[prefix_hash].append(current_ts)
 
     total_size = 30000
     req_count = 0
@@ -814,8 +820,9 @@ if __name__ == "__main__":
     total_hit_id_count = 0
     total_req_id_count = 0
     for req in sync_send_req_set:
-        for id in req:
-            NRT[id].popleft()
+        for j in range(len(req)):
+            prefix_hash = hash(tuple(req[:j + 1]))
+            NRT[prefix_hash].popleft()
 
         #print(f"req count {req_count}, print")
         #tree.pretty_print()
