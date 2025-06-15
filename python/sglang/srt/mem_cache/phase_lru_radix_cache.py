@@ -26,6 +26,7 @@ import pickle
 import time
 import sys
 import io
+import os
 import logging
 import math
 from collections import defaultdict
@@ -747,9 +748,22 @@ class PhaseLRURadixCache(BasePrefixCache):
 if __name__ == "__main__":
     tree = PhaseLRURadixCache(None, None, page_size=1, disable=False)
 
-    tree.insert("Hello")
-    tree.insert("Hello")
-    tree.insert("Hello_L.A.!")
+    sync_send_req_set = []
+    if os.path.exists("stress_teststress_test_token_id_prompt_list.pkl"):
+        with open('stress_test_token_id.pkl', 'rb') as f:
+            prompt_list = pickle.load(f)
+            for prompt in prompt_list:
+                sync_send_req_set.append(prompt)
+        print(f"total number of sync reqs: {len(sync_send_req_set)}")
+    
+    for i in range(10):
+        tree.insert(sync_send_req_set[i])
+
+    tree.pretty_print()
+
+    #tree.insert("Hello")
+    #tree.insert("Hello")
+    #tree.insert("Hello_L.A.!")
     # tree.insert("Hello_world! Happy")
     # tree.insert("I love you!")
     tree.pretty_print()
