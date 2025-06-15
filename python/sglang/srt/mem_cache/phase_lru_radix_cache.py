@@ -789,8 +789,8 @@ class PhaseLRURadixCache(BasePrefixCache):
 if __name__ == "__main__":
     tree = PhaseLRURadixCache(None, None, page_size=1, disable=False)
     #tree.set_algo_type("phaselru")
-    tree.set_algo_type("lru")
-    #tree.set_algo_type("belady")
+    #tree.set_algo_type("lru")
+    tree.set_algo_type("belady")
 
     sync_send_req_set = []
     if os.path.exists("stress_test_token_id.pkl"):
