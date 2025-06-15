@@ -778,7 +778,7 @@ if __name__ == "__main__":
             print(f"evicted {len(req)}")
 
         prefix, _ = tree.match_prefix(req)
-        print(f"req_count = {req_count}, #prefix = {len(prefix)}, current_size = {current_size}")
+        print(f"req_count = {req_count}, #req = {len(req)}, #prefix = {len(prefix)}, current_size = {current_size}")
 
         for id in req:
             NRT[id].popleft()
@@ -798,7 +798,7 @@ if __name__ == "__main__":
     #tree.insert("Hello_L.A.!")
     # tree.insert("Hello_world! Happy")
     # tree.insert("I love you!")
-    tree.pretty_print()
+    #tree.pretty_print()
 
     # print(tree.match_prefix("I love you! aha"))
 
