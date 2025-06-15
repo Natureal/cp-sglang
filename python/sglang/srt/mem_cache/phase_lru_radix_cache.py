@@ -828,9 +828,9 @@ if __name__ == "__main__":
         current_size += len(req) - len(prefix)
 
         req_count += 1
-        captured = tree._capture_print()
-        logger.info(f"---------------------------------------------------- tree structure: {captured}")
-        if req_count >= 10:
+        #captured = tree._capture_print()
+        #logger.info(f"---------------------------------------------------- tree structure: {captured}")
+        if req_count >= 1000000:
             break
 
     tree.pretty_print()
