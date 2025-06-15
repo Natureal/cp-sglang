@@ -558,6 +558,9 @@ class PhaseLRURadixCache(BasePrefixCache):
         leaves = self._collect_leaves()
         self._predict(leaves)
 
+        for node in leaves:
+            print(f"current ts = {self.current_ts}, leaf node pred = {node.pred}")
+
         heap_by_pred = []
         for node in leaves:
             heapq.heappush(heap_by_pred, (-node.pred, node))
