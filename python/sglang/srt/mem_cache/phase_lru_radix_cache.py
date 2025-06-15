@@ -67,6 +67,7 @@ class TreeNode:
         self.last_access_ts = 0
         self.pred = 0
         self.pred_valid = 0
+        self.access_times = 0
 
         self.hit_count = 0
         # indicating the node is loading KV cache from host
@@ -476,7 +477,7 @@ class PhaseLRURadixCache(BasePrefixCache):
 
     def pretty_print(self):
         self._print_helper(self.root_node, 0)
-        print(f"#tokens: {self.total_size()}")
+        print(f"#tokens: {self.total_size()}, number of nodes: {TreeNode.counter - self.deleted_node_count}")
 
     def _capture_print(self):
         buffer = io.StringIO()
@@ -655,6 +656,8 @@ class PhaseLRURadixCache(BasePrefixCache):
         if len(self.distinct_element) >= self.phase_cache_k:
             self._start_new_phase()
 
+        node.access_times += 1
+
         if original_ts is not None:
             self.sorted_list.discard(node.last_access_ts)
         node.last_access_ts = new_ts
@@ -696,7 +699,8 @@ class PhaseLRURadixCache(BasePrefixCache):
             current_node, current_indent = stack.pop()
             print(
                 "--" * current_indent,
-                f"node_id ({current_node.id}), depth ({current_indent / 2}), #keys {len(current_node.key)}",
+                #f"node_id ({current_node.id}), depth ({current_indent / 2}), #keys {len(current_node.key)}",
+                f"node_id ({current_node.id}), #times {current_node.access_times}, #keys {len(current_node.key)}",
                 #current_node.key[:10],
                 #f"r={current_node.lock_ref}",
             )
