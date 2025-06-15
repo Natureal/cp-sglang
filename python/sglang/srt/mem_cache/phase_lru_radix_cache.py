@@ -568,7 +568,8 @@ class PhaseLRURadixCache(BasePrefixCache):
             return
 
         self.current_ts += 1
-        self.token_to_kv_pool_allocator.record_eviction(num_tokens)
+        if self.token_to_kv_pool_allocator:
+            self.token_to_kv_pool_allocator.record_eviction(num_tokens)
 
         if self.degrade_to_lru == True:
             self._evict_by_lru(num_tokens, False)
