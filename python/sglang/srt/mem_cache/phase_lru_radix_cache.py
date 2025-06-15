@@ -576,6 +576,8 @@ class PhaseLRURadixCache(BasePrefixCache):
             if x.lock_ref > 0:
                 continue
 
+            print(f"current ts = {self.current_ts}, evicted node pred = {x.pred}")
+
             if self.token_to_kv_pool_allocator:
                 self.token_to_kv_pool_allocator.free(x.value)
             num_evicted += len(x.value)
@@ -604,7 +606,10 @@ class PhaseLRURadixCache(BasePrefixCache):
         if self.token_to_kv_pool_allocator:
             self.token_to_kv_pool_allocator.free_group_begin()
 
-        print(f"lru_budget: {self.lru_budget}")
+        #print(f"lru_budget: {self.lru_budget}")
+        if self.algo_type == "belady":
+            self.lru_budget = 0
+
         original_num_tokens = num_tokens
         if  self.lru_budget >= 1:
             actual_evicted_num = self._evict_by_lru(num_tokens, True)
