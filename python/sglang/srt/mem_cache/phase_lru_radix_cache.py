@@ -235,7 +235,6 @@ class PhaseLRURadixCache(BasePrefixCache):
             key = key[:page_aligned_len]
 
         value, last_node = self._match_prefix_helper(self.root_node, key)
-        print(f"value: {str(value)}")
         if value:
             value = torch.cat(value)
         else:
@@ -772,9 +771,10 @@ if __name__ == "__main__":
         current_size = TreeNode.counter - tree.deleted_node_count
         if current_size + len(req) > total_size:
             tree.evict(len(req))
+            print(f"evicted {len(req)}")
 
         prefix = tree.match_prefix(req)
-        print(len(prefix))
+        print(f"req_count = {req_count}, current_size = {current_size}")
 
         for id in req:
             NRT[id].popleft()
