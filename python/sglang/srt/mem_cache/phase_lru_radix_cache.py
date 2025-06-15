@@ -235,6 +235,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             key = key[:page_aligned_len]
 
         value, last_node = self._match_prefix_helper(self.root_node, key)
+        print(f"value: {str(value)}")
         if value:
             value = torch.cat(value)
         else:
