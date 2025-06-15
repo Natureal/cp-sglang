@@ -784,7 +784,7 @@ if __name__ == "__main__":
             NRT[id].popleft()
 
         value = torch.zeros(len(req))
-        tree.insert(req, value)
+        tree.insert(req, value, True)
         current_size += len(req)
 
         req_count += 1
