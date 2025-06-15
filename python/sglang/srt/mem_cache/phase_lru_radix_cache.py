@@ -391,7 +391,7 @@ class PhaseLRURadixCache(BasePrefixCache):
 
     def cache_finished_req(self, req: Req):
         """Cache request when it finishes."""
-        if self.current_ts % 100 == 0:
+        if self.current_ts % 1000 == 0:
             logger.info(f"current ts: {self.current_ts}")
             captured = self._capture_print()
             logger.info(f"---------------------------------------------------- tree structure: {captured}")
@@ -558,9 +558,9 @@ class PhaseLRURadixCache(BasePrefixCache):
         leaves = self._collect_leaves()
         self._predict(leaves)
 
-        #print(f"start pred")
-        #for node in leaves:
-        #    print(f"current ts = {self.current_ts}, leaf node pred = {node.pred}")
+        print(f"start pred")
+        for node in leaves:
+            print(f"current ts = {self.current_ts}, leaf node pred = {node.pred}")
         self.pretty_print()
 
         heap_by_pred = []
