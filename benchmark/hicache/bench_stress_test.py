@@ -239,6 +239,18 @@ class WorkloadGenerator:
         with open('stress_test_prompt_list.pkl', 'wb') as f:
             pickle.dump(total_items, f)
 
+    def generate_stress_test_token_id(self):
+        total_items = []
+        for i in range(271):
+            with open('2108_dump_req_keys_' + str(i) + '.pkl', 'rb') as f:
+                self.stress_test_data = deque(pickle.load(f))
+                for item in self.stress_test_data:
+                    total_items.append(item)
+                print(f"current num of total_items: {len(total_items)}")
+
+        with open('stress_test_token_id.pkl', 'wb') as f:
+            pickle.dump(total_items, f)
+
     def __init__(self, args):
         # Construct the base URL for requests
         self.url = f"http://{args.host}:{args.port}/generate"
@@ -261,7 +273,8 @@ class WorkloadGenerator:
         self.load_local = False
         self.load_stress_test = True
 
-        self.process_stress_test_data()
+        #self.process_stress_test_data()
+        self.generate_stress_test_token_id()
 
         if self.load_stress_test and os.path.exists("stress_test_prompt_list.pkl"):
             with open('stress_test_prompt_list.pkl', 'rb') as f:
