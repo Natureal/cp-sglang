@@ -758,6 +758,9 @@ if __name__ == "__main__":
     
     for i in range(10):
         tree.insert(sync_send_req_set[i])
+        for id in sync_send_req_set[i]:
+            print(id)
+        print("\n")
 
     tree.pretty_print()
 
