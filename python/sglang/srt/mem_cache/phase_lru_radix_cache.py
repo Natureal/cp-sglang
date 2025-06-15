@@ -495,7 +495,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         return self._total_size_helper()
     
     def belady_predict(self, key):
-        return NRT[key].popleft()
+        return NRT[key][0]
 
     def _predict(self, nodes: List[TreeNode]):
         if self.algo_type == "belady":
