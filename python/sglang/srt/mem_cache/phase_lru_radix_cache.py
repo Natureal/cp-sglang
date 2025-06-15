@@ -369,6 +369,9 @@ class PhaseLRURadixCache(BasePrefixCache):
             elif algo_type == "phaselru":
                 self.degrade_to_lru = False
                 logger.info(f"Caching algorithm switches from lru to phaselru")
+            elif algo_type == "belady":
+                self.degrade_to_lru = False
+                logger.info(f"Caching algorithm switches from lru to belady")
         else:
             logger.info(f"Caching algorithm is already {self.algo_type}")
 
