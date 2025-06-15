@@ -577,7 +577,8 @@ class PhaseLRURadixCache(BasePrefixCache):
             self._evict_by_lru(num_tokens, False)
             return
         
-        self.token_to_kv_pool_allocator.free_group_begin()
+        if self.token_to_kv_pool_allocator:
+            self.token_to_kv_pool_allocator.free_group_begin()
 
         if  self.lru_budget >= 1:
             actual_evicted_num = self._evict_by_lru(num_tokens, True)
@@ -586,7 +587,8 @@ class PhaseLRURadixCache(BasePrefixCache):
         if num_tokens > 0:
             self._evict_by_pred(num_tokens)
 
-        self.token_to_kv_pool_allocator.free_group_end()
+        if self.token_to_kv_pool_allocator:
+            self.token_to_kv_pool_allocator.free_group_end()
 
     def inc_lock_ref(self, node: TreeNode):
         if self.disable:
@@ -785,7 +787,7 @@ if __name__ == "__main__":
 
         value = torch.zeros(len(req))
         tree.insert(req, value, True)
-        current_size += len(req)
+        current_size += len(req) - len(prefix)
 
         req_count += 1
         if req_count >= 100000:
