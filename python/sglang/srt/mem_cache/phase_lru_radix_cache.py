@@ -495,6 +495,8 @@ class PhaseLRURadixCache(BasePrefixCache):
         return self._total_size_helper()
     
     def belady_predict(self, key):
+        if len(NRT[key]) == 0:
+            return 100000000
         return NRT[key][0]
 
     def _predict(self, nodes: List[TreeNode]):
