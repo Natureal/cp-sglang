@@ -502,7 +502,6 @@ class PhaseLRURadixCache(BasePrefixCache):
     def _predict(self, nodes: List[TreeNode]):
         if self.algo_type == "belady":
             for node in nodes:
-                print(f"node key -1 = {node.key[-1]}")
                 node.pred = self.belady_predict(node.key[-1])
                 node.pred_valid = 1
             return
@@ -558,9 +557,9 @@ class PhaseLRURadixCache(BasePrefixCache):
         leaves = self._collect_leaves()
         self._predict(leaves)
 
-        print(f"start pred")
-        for node in leaves:
-            print(f"current ts = {self.current_ts}, leaf node pred = {node.pred}")
+        #print(f"start pred")
+        #for node in leaves:
+        #    print(f"current ts = {self.current_ts}, leaf node pred = {node.pred}")
 
         heap_by_pred = []
         for node in leaves:
@@ -733,7 +732,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             print(
                 "--" * current_indent,
                 #f"node_id ({current_node.id}), depth ({current_indent / 2}), #keys {len(current_node.key)}",
-                f"node_id ({current_node.id}), #times {current_node.access_times}, #keys {len(current_node.key)}",
+                f"node_id ({current_node.id}), #times {current_node.access_times}, pred {node.pred}, #keys {len(current_node.key)}",
                 #current_node.key[:10],
                 #f"r={current_node.lock_ref}",
             )
