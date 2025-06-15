@@ -508,7 +508,7 @@ class PhaseLRURadixCache(BasePrefixCache):
     def _predict(self, nodes: List[TreeNode]):
         if self.algo_type == "belady":
             for node in nodes:
-                node.pred = self.belady_predict(node.prefix_key)
+                node.pred = self.belady_predict(hash(tuple(node.prefix_key + node.key)))
                 #print(f"pred, key = {node.key[0]}, pred = {node.pred}") #, full key = {node.key}")
                 node.pred_valid = 1
             return
