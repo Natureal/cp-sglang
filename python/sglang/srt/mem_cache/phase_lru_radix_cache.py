@@ -524,7 +524,8 @@ class PhaseLRURadixCache(BasePrefixCache):
             if x.lock_ref > 0:
                 continue
 
-            self.token_to_kv_pool_allocator.free(x.value)
+            if self.token_to_kv_pool_allocator:
+                self.token_to_kv_pool_allocator.free(x.value)
             num_evicted += len(x.value)
             self._delete_leaf(x)
 
@@ -554,7 +555,8 @@ class PhaseLRURadixCache(BasePrefixCache):
             if x.lock_ref > 0:
                 continue
 
-            self.token_to_kv_pool_allocator.free(x.value)
+            if self.token_to_kv_pool_allocator:
+                self.token_to_kv_pool_allocator.free(x.value)
             num_evicted += len(x.value)
             self.pred_evicted_ts[hash(tuple(x.key))] = self.current_ts
             self._delete_leaf(x)
