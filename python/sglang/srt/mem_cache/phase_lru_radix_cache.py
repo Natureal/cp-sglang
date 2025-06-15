@@ -777,7 +777,7 @@ if __name__ == "__main__":
                 NRT[id] = deque()
             NRT[id].append(current_ts)
 
-    total_size = 21000
+    total_size = 40000
     req_count = 0
     current_size = 0
     for req in sync_send_req_set:
