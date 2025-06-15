@@ -503,7 +503,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         if self.algo_type == "belady":
             for node in nodes:
                 node.pred = self.belady_predict(node.key[0])
-                print(f"pred, key = {node.key[0]}, pred = {node.pred}") #, full key = {node.key}")
+                #print(f"pred, key = {node.key[0]}, pred = {node.pred}") #, full key = {node.key}")
                 node.pred_valid = 1
             return
 
@@ -827,7 +827,7 @@ if __name__ == "__main__":
         current_size += len(req) - len(prefix)
 
         req_count += 1
-        if req_count >= 1000:
+        if req_count >= 1000000:
             break
 
     tree.pretty_print()
