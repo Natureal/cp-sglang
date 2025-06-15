@@ -777,7 +777,9 @@ if __name__ == "__main__":
 
         for id in req:
             NRT[id].popleft()
-        tree.insert(req)
+
+        value = [0] * len(req)
+        tree.insert(req, value)
 
         req_count += 1
         if req_count >= 100:
