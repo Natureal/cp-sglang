@@ -13,6 +13,12 @@ class POPUPredictor(ReuseDistancePredictor):
         self.counts[child_addr] = copy.deepcopy(self.counts[original_address])
         self.counts[parent_addr] = copy.deepcopy(self.counts[original_address])
 
+    def feature_delete(self, address):
+        del self.counts[address]
+
+    def feature_copy(self, address, new_address):
+        self.counts[new_address] = self.counts[address]
+
     def spawn_access(self, address, new_address):
         # copy features from parent node
         self.counts[new_address] = copy.deepcopy(self.counts[address])
