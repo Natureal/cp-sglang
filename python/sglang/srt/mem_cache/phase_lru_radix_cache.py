@@ -813,7 +813,8 @@ if __name__ == "__main__":
         #tree.pretty_print()
 
         if current_size + len(req) > total_size:
-            evicted_num = tree.evict(len(req))
+            #evicted_num = tree.evict(len(req))
+            evicted_num = tree.evict(current_size + len(req) - total_size)
             current_size -= evicted_num
             print(f"evicted {len(req)}")
 
