@@ -780,6 +780,8 @@ if __name__ == "__main__":
     total_size = 40000
     req_count = 0
     current_size = 0
+    total_hit_id_count = 0
+    total_req_id_count = 0
     for req in sync_send_req_set:
         if current_size + len(req) > total_size:
             evicted_num = tree.evict(len(req))
@@ -787,6 +789,8 @@ if __name__ == "__main__":
             print(f"evicted {len(req)}")
 
         prefix, _ = tree.match_prefix(req)
+        total_hit_id_count += len(prefix)
+        total_req_id_count += len(req)
         print(f"req_count = {req_count}, #req = {len(req)}, #prefix = {len(prefix)}, current_size = {current_size}, #nodes = {TreeNode.counter - tree.deleted_node_count}")
 
         for id in req:
@@ -799,6 +803,8 @@ if __name__ == "__main__":
         req_count += 1
         if req_count >= 100000:
             break
+
+    print(f"Cache hit ratio: {total_hit_id_count / total_req_id_count}, avg hit id count = {total_hit_id_count / req_count}")
 
     tree.pretty_print()
 
