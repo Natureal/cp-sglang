@@ -27,6 +27,22 @@ class POPUPredictor(ReuseDistancePredictor):
         pred = (time.monotonic() - self.base_time) / self.counts[address]
         return pred
     
+class BeladyPredictor(ReuseDistancePredictor):
+    def __init__(self):
+        super().__init__()
+
+    def split_copy(self, original_address, child_addr, parent_addr):
+        pass
+
+    def spawn_access(self, address, new_address):
+        pass
+
+    def access(self, address):
+        pass
+    
+    def predict(self, address):
+       return 0
+
 class LRUPredictor(ReuseDistancePredictor):
     def __init__(self):
         super().__init__()

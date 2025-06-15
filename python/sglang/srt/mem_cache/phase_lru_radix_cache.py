@@ -35,6 +35,7 @@ from typing import TYPE_CHECKING, List, Optional, Tuple
 from sortedcontainers import SortedList
 
 logger = logging.getLogger(__name__)
+NRT = {}
 
 import torch
 
@@ -489,8 +490,18 @@ class PhaseLRURadixCache(BasePrefixCache):
 
     def total_size(self):
         return self._total_size_helper()
+    
+    def belady_predict(key):
+        return NRT[key].popleft()
 
     def _predict(self, nodes: List[TreeNode]):
+        if self.algo_type == "belady":
+            for node in nodes:
+                if node.pred_valid == 0:
+                    node.pred = self.belady_predict(node.key[0])
+                    node.pred_valid = 1
+            return
+
         node_to_pred = []
         addresses = []
         for node in nodes:
@@ -760,7 +771,8 @@ class PhaseLRURadixCache(BasePrefixCache):
 if __name__ == "__main__":
     tree = PhaseLRURadixCache(None, None, page_size=1, disable=False)
     #tree.set_algo_type("phaselru")
-    tree.set_algo_type("lru")
+    #tree.set_algo_type("lru")
+    tree.set_algo_type("belady")
 
     sync_send_req_set = []
     if os.path.exists("stress_test_token_id.pkl"):
@@ -769,8 +781,7 @@ if __name__ == "__main__":
             for prompt in prompt_list:
                 sync_send_req_set.append(prompt)
         print(f"total number of sync reqs: {len(sync_send_req_set)}")
-    
-    NRT = {}
+
     current_ts = 0
     for i in range(len(sync_send_req_set)):
         current_ts += 1
@@ -785,6 +796,9 @@ if __name__ == "__main__":
     total_hit_id_count = 0
     total_req_id_count = 0
     for req in sync_send_req_set:
+        for id in req:
+            NRT[id].popleft()
+
         if current_size + len(req) > total_size:
             evicted_num = tree.evict(len(req))
             current_size -= evicted_num
@@ -794,9 +808,6 @@ if __name__ == "__main__":
         total_hit_id_count += len(prefix)
         total_req_id_count += len(req)
         print(f"req_count = {req_count}, #req = {len(req)}, #prefix = {len(prefix)}, current_size = {current_size}, #nodes = {TreeNode.counter - tree.deleted_node_count}")
-
-        for id in req:
-            NRT[id].popleft()
 
         value = torch.zeros(len(req))
         tree.insert(req, value, True)
