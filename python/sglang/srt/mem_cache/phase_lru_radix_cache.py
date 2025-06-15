@@ -589,7 +589,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         if self.disable:
             return
 
-        self.current_ts += 1
+        #self.current_ts += 1
         if self.token_to_kv_pool_allocator:
             self.token_to_kv_pool_allocator.record_eviction(num_tokens)
 
