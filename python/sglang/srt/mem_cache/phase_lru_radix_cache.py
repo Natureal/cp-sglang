@@ -772,6 +772,9 @@ if __name__ == "__main__":
         if current_size + len(req) > total_size:
             tree.evict(len(req))
 
+        prefix = tree.match_prefix(req)
+        print(len(prefix))
+
         for id in req:
             NRT[id].popleft()
         tree.insert(req)
