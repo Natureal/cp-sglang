@@ -564,6 +564,8 @@ class PhaseLRURadixCache(BasePrefixCache):
             if len(x.parent.children) == 0 and x.parent != self.root_node and x.parent.lock_ref == 0:
                 self._predict([x.parent])
                 heapq.heappush(heap_by_pred, (-x.parent.pred, x.parent))
+        
+        return num_evicted
 
     def evict(self, num_tokens: int):
         if self.disable:
@@ -573,22 +575,27 @@ class PhaseLRURadixCache(BasePrefixCache):
         if self.token_to_kv_pool_allocator:
             self.token_to_kv_pool_allocator.record_eviction(num_tokens)
 
+        actual_evicted_num = 0
         if self.degrade_to_lru == True:
-            self._evict_by_lru(num_tokens, False)
-            return
+            actual_evicted_num = self._evict_by_lru(num_tokens, False)
+            return actual_evicted_num
         
         if self.token_to_kv_pool_allocator:
             self.token_to_kv_pool_allocator.free_group_begin()
 
+        original_num_tokens = num_tokens
         if  self.lru_budget >= 1:
             actual_evicted_num = self._evict_by_lru(num_tokens, True)
             num_tokens -= actual_evicted_num
 
         if num_tokens > 0:
-            self._evict_by_pred(num_tokens)
+            actual_evicted_num = self._evict_by_pred(num_tokens)
+            num_tokens -= actual_evicted_num
 
         if self.token_to_kv_pool_allocator:
             self.token_to_kv_pool_allocator.free_group_end()
+
+        return original_num_tokens - num_tokens
 
     def inc_lock_ref(self, node: TreeNode):
         if self.disable:
@@ -775,8 +782,8 @@ if __name__ == "__main__":
     current_size = 0
     for req in sync_send_req_set:
         if current_size + len(req) > total_size:
-            tree.evict(len(req))
-            current_size -= len(req)
+            evicted_num = tree.evict(len(req))
+            current_size -= evicted_num
             print(f"evicted {len(req)}")
 
         prefix, _ = tree.match_prefix(req)
