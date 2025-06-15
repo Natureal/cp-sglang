@@ -778,7 +778,7 @@ if __name__ == "__main__":
             print(f"evicted {len(req)}")
 
         prefix = tree.match_prefix(req)
-        print(f"req_count = {req_count}, current_size = {current_size}")
+        print(f"req_count = {req_count}, #prefix = {len(prefix)}, current_size = {current_size}")
 
         for id in req:
             NRT[id].popleft()
