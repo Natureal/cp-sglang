@@ -240,8 +240,6 @@ class PhaseLRURadixCache(BasePrefixCache):
         else:
             value = torch.empty((0,), dtype=torch.int64, device=self.device)
 
-        print(f"#value: {len(value)}, value: {str(value)}")
-
         return value, last_node
     
     def _match_prefix_helper(self, node: TreeNode, key: List):
@@ -779,7 +777,7 @@ if __name__ == "__main__":
             current_size -= len(req)
             print(f"evicted {len(req)}")
 
-        prefix = tree.match_prefix(req)
+        prefix, _ = tree.match_prefix(req)
         print(f"req_count = {req_count}, #prefix = {len(prefix)}, current_size = {current_size}")
 
         for id in req:
