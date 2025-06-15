@@ -822,7 +822,7 @@ if __name__ == "__main__":
         current_size += len(req) - len(prefix)
 
         req_count += 1
-        if req_count >= 100:
+        if req_count >= 1000:
             break
 
     tree.pretty_print()
