@@ -604,6 +604,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         if self.token_to_kv_pool_allocator:
             self.token_to_kv_pool_allocator.free_group_begin()
 
+        print(f"lru_budget: {self.lru_budget}")
         original_num_tokens = num_tokens
         if  self.lru_budget >= 1:
             actual_evicted_num = self._evict_by_lru(num_tokens, True)
