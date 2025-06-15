@@ -163,9 +163,9 @@ class PhaseLRURadixCache(BasePrefixCache):
         self.algo_type = "lru"
         self.degrade_to_lru = True
 
-        self.predictor = POPUPredictor()
+        #self.predictor = POPUPredictor()
         #self.predictor = PLECOPredictor()
-        #self.predictor = LRBReuseDistancePredictor()
+        self.predictor = LRBReuseDistancePredictor()
 
         if self.token_to_kv_pool_allocator:
             self.device = self.token_to_kv_pool_allocator.device
@@ -349,8 +349,8 @@ class PhaseLRURadixCache(BasePrefixCache):
                 rank = self.sorted_list.bisect_left(self.pred_evicted_ts[address])
                 self.pred_rank_sum += rank
                 logger.info(f"rank: {rank}, sum of inversions: {self.pred_rank_sum}, pred avg inv = {self.pred_rank_sum / self.pred_evict_count}")
-                self.lru_budget = 0
-                #self.lru_budget = min(self.lru_budget + self.phase_err_param, 100000000)
+                #self.lru_budget = 0
+                self.lru_budget = min(self.lru_budget + self.phase_err_param, 100000000)
                 #self.lru_budget = 100000000
                 logger.info(f"reset lru_budget = {self.lru_budget}, phase_err_param = {self.phase_err_param}")
 
