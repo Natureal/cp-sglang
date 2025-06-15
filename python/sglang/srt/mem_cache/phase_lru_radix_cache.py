@@ -774,6 +774,7 @@ if __name__ == "__main__":
     for req in sync_send_req_set:
         if current_size + len(req) > total_size:
             tree.evict(len(req))
+            current_size -= len(req)
             print(f"evicted {len(req)}")
 
         prefix = tree.match_prefix(req)
