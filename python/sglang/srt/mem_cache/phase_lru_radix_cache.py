@@ -759,6 +759,7 @@ class PhaseLRURadixCache(BasePrefixCache):
 
 if __name__ == "__main__":
     tree = PhaseLRURadixCache(None, None, page_size=1, disable=False)
+    tree.set_algo_type("phaselru")
 
     sync_send_req_set = []
     if os.path.exists("stress_test_token_id.pkl"):
@@ -804,9 +805,9 @@ if __name__ == "__main__":
         if req_count >= 100000:
             break
 
-    print(f"Cache hit ratio: {total_hit_id_count / total_req_id_count}, avg hit id count = {total_hit_id_count / req_count}, avg req id count = {total_req_id_count / req_count}")
-
     tree.pretty_print()
+
+    print(f"Cache hit ratio: {total_hit_id_count / total_req_id_count}, avg hit id count = {total_hit_id_count / req_count}, avg req id count = {total_req_id_count / req_count}")
 
     #tree.insert("Hello")
     #tree.insert("Hello")
