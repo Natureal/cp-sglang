@@ -18,7 +18,7 @@ class POPUPredictor(ReuseDistancePredictor):
         self.counts[new_address] = copy.deepcopy(self.counts[address])
         #self.access(new_address)
 
-    def access(self, address):
+    def access(self, address, current_ts = None):
         if address not in self.counts:
             self.counts[address] = 0
         self.counts[address] += 1
@@ -57,7 +57,7 @@ class LRUPredictor(ReuseDistancePredictor):
         # copy features from parent node
         self.access_ts[new_address] = self.access_ts[address]
 
-    def access(self, address):
+    def access(self, address, current_ts = None):
         self.access_ts[address] = time.monotonic()
     
     def predict(self, address):
