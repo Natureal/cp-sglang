@@ -17,7 +17,7 @@ class POPUPredictor(ReuseDistancePredictor):
         del self.counts[address]
 
     def feature_copy(self, address, new_address):
-        self.counts[new_address] = self.counts[address]
+        self.counts[new_address] = copy.deepcopy(self.counts[address])
 
     def spawn_access(self, address, new_address):
         # copy features from parent node
@@ -29,9 +29,9 @@ class POPUPredictor(ReuseDistancePredictor):
             self.counts[address] = 0
         self.counts[address] += 1
     
-    def predict(self, address):
-        pred = (time.monotonic() - self.base_time) / self.counts[address]
-        return pred
+    def predict(self, addresses):
+        preds = [(time.monotonic() - self.base_time) / self.counts[address] for address in addresses]
+        return preds
     
 class BeladyPredictor(ReuseDistancePredictor):
     def __init__(self):
