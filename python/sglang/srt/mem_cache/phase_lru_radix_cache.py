@@ -808,6 +808,9 @@ if __name__ == "__main__":
         for id in req:
             NRT[id].popleft()
 
+        print(f"req count {req_count}, print")
+        tree.pretty_print()
+
         if current_size + len(req) > total_size:
             evicted_num = tree.evict(len(req))
             current_size -= evicted_num
