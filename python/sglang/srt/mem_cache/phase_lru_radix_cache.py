@@ -565,8 +565,8 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         heap_by_pred = []
         for node in leaves:
-            #heapq.heappush(heap_by_pred, (-node.pred, node))
-            heapq.heappush(heap_by_pred, (node.last_access_ts, node))
+            heapq.heappush(heap_by_pred, (-node.pred, node))
+            #heapq.heappush(heap_by_pred, (node.last_access_ts, node))
 
         num_evicted = 0
         while num_evicted < num_tokens and len(heap_by_pred):
@@ -587,8 +587,8 @@ class PhaseLRURadixCache(BasePrefixCache):
 
             if len(x.parent.children) == 0 and x.parent != self.root_node and x.parent.lock_ref == 0:
                 self._predict([x.parent])
-                #heapq.heappush(heap_by_pred, (-x.parent.pred, x.parent))
-                heapq.heappush(heap_by_pred, (x.parent.last_access_ts, x.parent))
+                heapq.heappush(heap_by_pred, (-x.parent.pred, x.parent))
+                #heapq.heappush(heap_by_pred, (x.parent.last_access_ts, x.parent))
         
         return num_evicted
 
