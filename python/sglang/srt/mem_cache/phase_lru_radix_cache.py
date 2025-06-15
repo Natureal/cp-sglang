@@ -767,8 +767,8 @@ if __name__ == "__main__":
 
     total_size = 21000
     req_count = 0
+    current_size = 0
     for req in sync_send_req_set:
-        current_size = TreeNode.counter - tree.deleted_node_count
         if current_size + len(req) > total_size:
             tree.evict(len(req))
             print(f"evicted {len(req)}")
@@ -781,6 +781,7 @@ if __name__ == "__main__":
 
         value = torch.zeros(len(req))
         tree.insert(req, value)
+        current_size += len(req)
 
         req_count += 1
         if req_count >= 100:
