@@ -734,7 +734,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             print(
                 "--" * current_indent,
                 #f"node_id ({current_node.id}), depth ({current_indent / 2}), #keys {len(current_node.key)}",
-                f"node_id ({current_node.id}), #times {current_node.access_times}, pred {current_node.pred}, #keys {len(current_node.key)}",
+                f"node_id ({current_node.id}), access_t {current_node.last_access_ts}, pred {current_node.pred}, #keys {len(current_node.key)}",
                 #current_node.key[:10],
                 #f"r={current_node.lock_ref}",
             )
@@ -781,8 +781,8 @@ class PhaseLRURadixCache(BasePrefixCache):
 if __name__ == "__main__":
     tree = PhaseLRURadixCache(None, None, page_size=1, disable=False)
     #tree.set_algo_type("phaselru")
-    tree.set_algo_type("lru")
-    #tree.set_algo_type("belady")
+    #tree.set_algo_type("lru")
+    tree.set_algo_type("belady")
 
     sync_send_req_set = []
     if os.path.exists("stress_test_token_id.pkl"):
