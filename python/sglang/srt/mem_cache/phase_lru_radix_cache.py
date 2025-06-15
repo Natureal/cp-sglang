@@ -804,7 +804,7 @@ if __name__ == "__main__":
         if req_count >= 100000:
             break
 
-    print(f"Cache hit ratio: {total_hit_id_count / total_req_id_count}, avg hit id count = {total_hit_id_count / req_count}")
+    print(f"Cache hit ratio: {total_hit_id_count / total_req_id_count}, avg hit id count = {total_hit_id_count / req_count}, avg req id count = {total_req_id_count / req_count}")
 
     tree.pretty_print()
 
