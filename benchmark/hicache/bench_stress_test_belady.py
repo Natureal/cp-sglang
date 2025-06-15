@@ -276,8 +276,8 @@ class WorkloadGenerator:
         self.process_stress_test_data()
         #self.generate_stress_test_token_id()
 
-        if self.load_stress_test and os.path.exists("stress_test_prompt_list.pkl"):
-            with open('stress_test_prompt_list.pkl', 'rb') as f:
+        if self.load_stress_test and os.path.exists("stress_teststress_test_token_id_prompt_list.pkl"):
+            with open('stress_test_token_id.pkl', 'rb') as f:
                 prompt_list = pickle.load(f)
                 for prompt in prompt_list:
                     #print(f"prompt: {prompt}")

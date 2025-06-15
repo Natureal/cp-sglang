@@ -749,7 +749,7 @@ if __name__ == "__main__":
     tree = PhaseLRURadixCache(None, None, page_size=1, disable=False)
 
     sync_send_req_set = []
-    if os.path.exists("stress_teststress_test_token_id_prompt_list.pkl"):
+    if os.path.exists("stress_test_token_id.pkl"):
         with open('stress_test_token_id.pkl', 'rb') as f:
             prompt_list = pickle.load(f)
             for prompt in prompt_list:
