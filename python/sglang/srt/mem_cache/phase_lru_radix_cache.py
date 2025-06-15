@@ -497,6 +497,7 @@ class PhaseLRURadixCache(BasePrefixCache):
     def belady_predict(self, key):
         if len(NRT[key]) == 0:
             return 100000000
+        print(f"pred, key = {key}, pred = {NRT[key][0]}")
         return NRT[key][0]
 
     def _predict(self, nodes: List[TreeNode]):
@@ -557,9 +558,9 @@ class PhaseLRURadixCache(BasePrefixCache):
         leaves = self._collect_leaves()
         self._predict(leaves)
 
-        print(f"start pred")
-        for node in leaves:
-            print(f"current ts = {self.current_ts}, leaf node pred = {node.pred}")
+        #print(f"start pred")
+        #for node in leaves:
+        #    print(f"current ts = {self.current_ts}, leaf node pred = {node.pred}")
         self.pretty_print()
 
         heap_by_pred = []
