@@ -326,7 +326,10 @@ class PhaseLRURadixCache(BasePrefixCache):
             new_node = TreeNode()
             new_node.parent = node
             new_node.key = key
-            new_node.prefix_key = node.prefix_key + node.key
+            if node.prefix_key:
+                new_node.prefix_key = node.prefix_key + node.key
+            else:
+                new_node.prefix_key = node.key
             new_node.value = value
             self._predictor_spawn(node, new_node)
             # copy ts from parent node when spawning node
