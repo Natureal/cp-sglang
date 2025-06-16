@@ -822,7 +822,7 @@ if __name__ == "__main__":
             prompt_ids_list = pickle.load(f)
             for prompt_ids in prompt_ids_list:
                 sync_send_req_set.append(prompt_ids)
-                print(f"prompt: {tokenizer.decode(prompt_ids)}")
+                #print(f"prompt: {tokenizer.decode(prompt_ids)}")
         print(f"total number of sync reqs: {len(sync_send_req_set)}")
 
     current_ts = 0
