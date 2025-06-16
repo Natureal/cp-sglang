@@ -20,6 +20,8 @@ The radix tree data structure for managing the KV cache.
 """
 
 import numpy as np
+import argparse
+import torch
 import heapq
 import random
 import pickle
@@ -34,10 +36,7 @@ from functools import partial
 from typing import TYPE_CHECKING, List, Optional, Tuple
 from sortedcontainers import SortedList
 
-logger = logging.getLogger(__name__)
-NRT = {}
-
-import torch
+from sglang.bench_serving import get_tokenizer
 
 from sglang.srt.disaggregation.kv_events import (
     AllBlocksCleared,
@@ -55,6 +54,8 @@ from sglang.srt.predictor.lrb import LRBReuseDistancePredictor
 if TYPE_CHECKING:
     from sglang.srt.managers.schedule_batch import Req
 
+logger = logging.getLogger(__name__)
+NRT = {}
 
 class TreeNode:
 
@@ -499,7 +500,7 @@ class PhaseLRURadixCache(BasePrefixCache):
 
     def total_size(self):
         return self._total_size_helper()
-    
+ 
     def belady_predict(self, key):
         if len(NRT[key]) == 0:
             return 100000000
@@ -793,8 +794,23 @@ class PhaseLRURadixCache(BasePrefixCache):
                 stack.extend(cur_node.children.values())
 
         return ret_list
+    
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Script to benchmark concurrent requests to a server."
+    )
+    parser.add_argument(
+        "--model-path",
+        type=str,
+        default="meta-llama/Llama-3.1-8B-Instruct",
+        help="model path compatible with Hugging Face Transformers",
+    )
+    return parser.parse_args()
 
 if __name__ == "__main__":
+    args = parse_args()
+    tokenizer = get_tokenizer(args.model_path)
+
     tree = PhaseLRURadixCache(None, None, page_size=1, disable=False)
     #tree.set_algo_type("phaselru") #popu
     #tree.set_algo_type("lru")
@@ -803,9 +819,10 @@ if __name__ == "__main__":
     sync_send_req_set = []
     if os.path.exists("stress_test_token_id.pkl"):
         with open('stress_test_token_id.pkl', 'rb') as f:
-            prompt_list = pickle.load(f)
-            for prompt in prompt_list:
-                sync_send_req_set.append(prompt)
+            prompt_ids_list = pickle.load(f)
+            for prompt_ids in prompt_ids_list:
+                sync_send_req_set.append(prompt_ids)
+                print(f"prompt: {tokenizer.decode(prompt_ids)}")
         print(f"total number of sync reqs: {len(sync_send_req_set)}")
 
     current_ts = 0
