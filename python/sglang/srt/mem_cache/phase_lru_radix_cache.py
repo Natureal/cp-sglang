@@ -853,9 +853,9 @@ if __name__ == "__main__":
 
     tree = PhaseLRURadixCache(None, None, page_size=1, disable=False)
     #tree.set_algo_type("phaselru") #popu
-    #tree.set_algo_type("lru")
+    tree.set_algo_type("lru")
     #tree.set_algo_type("phaselru")
-    tree.set_algo_type("belady")
+    #tree.set_algo_type("belady")
 
     sync_send_req_set = load_multiturn_data(tokenizer)
     #sync_send_req_set = load_stree_test_data(tokenizer)
