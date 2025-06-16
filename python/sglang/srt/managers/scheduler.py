@@ -203,6 +203,7 @@ class Scheduler(
         self.lora_paths = server_args.lora_paths
         self.max_loras_per_batch = server_args.max_loras_per_batch
         self.enable_overlap = not server_args.disable_overlap_schedule
+        logger.info(f"enable overlap: {str(self.enable_overlap)}")
         self.skip_tokenizer_init = server_args.skip_tokenizer_init
         self.enable_metrics = server_args.enable_metrics
         self.enable_kv_cache_events = server_args.kv_events_config is not None
