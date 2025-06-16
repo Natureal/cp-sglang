@@ -823,8 +823,8 @@ def parse_args():
     return parser.parse_args()
 
 if __name__ == "__main__":
-    #args = parse_args()
-    #tokenizer = get_tokenizer(args.model_path)
+    args = parse_args()
+    tokenizer = get_tokenizer(args.model_path)
 
     tree = PhaseLRURadixCache(None, None, page_size=1, disable=False)
     #tree.set_algo_type("phaselru") #popu
@@ -836,7 +836,7 @@ if __name__ == "__main__":
         with open('synthetic_multiturn_510_requests.pkl', 'rb') as f:
             prompt_ids_list = pickle.load(f)
             for prompt_ids in prompt_ids_list:
-                print(f"item: {prompt_ids[1]['text']}")
+                print(f"item: {tokenizer.encode(prompt_ids[1]['text'])}")
                 #print(f"prompt: {tokenizer.decode(prompt_ids)}")
         #print(f"total number of sync reqs: {len(sync_send_req_set)}")
 
