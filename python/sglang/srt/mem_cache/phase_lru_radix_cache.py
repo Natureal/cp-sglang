@@ -354,8 +354,8 @@ class PhaseLRURadixCache(BasePrefixCache):
         self.U = set(all_nodes)
 
         self.phase_err_param = int(math.sqrt(self.phase_err_param))
-        self.lru_budget = 10000000
-        #self.lru_budget = self.lru_budget / 2
+        #self.lru_budget = 10000000
+        self.lru_budget = self.lru_budget / 2
     
     def _judge_evicted_in_phase(self, node: TreeNode):
         if self.degrade_to_lru == True or self.waiting_queue_cache == True:
@@ -371,7 +371,7 @@ class PhaseLRURadixCache(BasePrefixCache):
                 logger.info(f"rank: {rank}, sum of inversions: {self.pred_rank_sum}, pred avg inv = {self.pred_rank_sum / self.pred_evict_count}")
                 #self.lru_budget = 0
                 #self.lru_budget = min(self.lru_budget + self.phase_err_param, 100000000)
-                self.lru_budget = 100000000
+                self.lru_budget = self.phase_cache_k
                 print(f"reset lru_budget = {self.lru_budget}, phase_err_param = {self.phase_err_param}")
                 
                 logger.info(f"reset lru_budget = {self.lru_budget}, phase_err_param = {self.phase_err_param}")
