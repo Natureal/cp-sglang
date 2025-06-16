@@ -198,36 +198,6 @@ class PhaseLRURadixCache(BasePrefixCache):
             return
         self._start_new_phase()
 
-    def _start_new_phase(self):
-        logger.info(f"phase_cache_k = {self.phase_cache_k}, new phase_cache_k =  {TreeNode.counter - self.deleted_node_count}")
-        logger.info(f"start a new phase, current_node_count: {TreeNode.counter - self.deleted_node_count}, decrease phase_err_param from {self.phase_err_param} to {int(math.sqrt(self.phase_err_param))}")
-
-        self.phase_cache_k = TreeNode.counter - self.deleted_node_count
-        self.distinct_element.clear()
-        self.pred_evicted.clear()
-        self.lru_evicted.clear()
-        self.inv_count = 0
-
-        # Collect all cached nodes (excluding root)
-        all_nodes = []
-        stack = [self.root_node]
-        while stack:
-            node = stack.pop()
-            if node != self.root_node and not node.evicted:
-                all_nodes.append(node)
-
-            for child in node.children.values():
-                if not child.evicted:
-                    stack.append(child)
-
-        self.U = set(all_nodes)
-
-        self.phase_err_param = int(math.sqrt(self.phase_err_param))
-        #self.lru_budget = 10000000
-        self.lru_budget = self.lru_budget / 2
-        #self.lru_budget = int(math.sqrt(self.lru_budget))
-        
-
     def match_prefix(self, key: List[int], **kwargs) -> Tuple[torch.Tensor, int]:
         """Find the matching prefix from the radix tree.
         Args:
@@ -358,6 +328,34 @@ class PhaseLRURadixCache(BasePrefixCache):
         if self.token_to_kv_pool_allocator:
             self.token_to_kv_pool_allocator.evictable_size = self.evictable_size_
         return total_prefix_length
+    
+    def _start_new_phase(self):
+        logger.info(f"phase_cache_k = {self.phase_cache_k}, new phase_cache_k =  {TreeNode.counter - self.deleted_node_count}")
+        logger.info(f"start a new phase, current_node_count: {TreeNode.counter - self.deleted_node_count}, decrease phase_err_param from {self.phase_err_param} to {int(math.sqrt(self.phase_err_param))}")
+
+        self.phase_cache_k = TreeNode.counter - self.deleted_node_count
+        self.distinct_element.clear()
+        self.pred_evicted.clear()
+        self.lru_evicted.clear()
+        self.inv_count = 0
+
+        # Collect all cached nodes (excluding root)
+        all_nodes = []
+        stack = [self.root_node]
+        while stack:
+            node = stack.pop()
+            if node != self.root_node and not node.evicted:
+                all_nodes.append(node)
+
+            for child in node.children.values():
+                if not child.evicted:
+                    stack.append(child)
+
+        self.U = set(all_nodes)
+
+        self.phase_err_param = int(math.sqrt(self.phase_err_param))
+        self.lru_budget = 10000000
+        #self.lru_budget = self.lru_budget / 2
     
     def _judge_evicted_in_phase(self, node: TreeNode):
         if self.degrade_to_lru == True or self.waiting_queue_cache == True:
