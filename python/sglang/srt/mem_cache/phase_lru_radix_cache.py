@@ -210,8 +210,8 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         self.phase_err_param = int(math.sqrt(self.phase_err_param))
         #self.sorted_list = SortedList()
-        #self.lru_budget = 0
-        self.lru_budget = int(math.sqrt(self.lru_budget))
+        self.lru_budget = 10000000
+        #self.lru_budget = int(math.sqrt(self.lru_budget))
         
 
     def match_prefix(self, key: List[int], **kwargs) -> Tuple[torch.Tensor, int]:
@@ -358,8 +358,8 @@ class PhaseLRURadixCache(BasePrefixCache):
                 self.pred_rank_sum += rank
                 logger.info(f"rank: {rank}, sum of inversions: {self.pred_rank_sum}, pred avg inv = {self.pred_rank_sum / self.pred_evict_count}")
                 #self.lru_budget = 0
-                self.lru_budget = min(self.lru_budget + self.phase_err_param, 100000000)
-                #self.lru_budget = 100000000
+                #self.lru_budget = min(self.lru_budget + self.phase_err_param, 100000000)
+                self.lru_budget = 100000000
                 print(f"reset lru_budget = {self.lru_budget}, phase_err_param = {self.phase_err_param}")
                 
                 logger.info(f"reset lru_budget = {self.lru_budget}, phase_err_param = {self.phase_err_param}")
