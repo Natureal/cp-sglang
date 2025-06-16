@@ -356,7 +356,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         #self.phase_err_param = int(math.sqrt(self.phase_err_param))
         self.phase_err_param = self.phase_err_param / 2
         #self.lru_budget = 10000000
-        self.lru_budget = self.lru_budget / 2
+        self.lru_budget = self.lru_budget
     
     def _judge_evicted_in_phase(self, node: TreeNode):
         if self.degrade_to_lru == True or self.waiting_queue_cache == True:
