@@ -33,8 +33,7 @@ import logging
 import math
 from collections import defaultdict, deque
 from functools import partial
-from typing import TYPE_CHECKING, List, Optional, Tuple
-from sortedcontainers import SortedList
+from typing import TYPE_CHECKING, List, Optional, Tuple, Set
 
 from sglang.bench_serving import get_tokenizer
 
@@ -143,10 +142,10 @@ class PhaseLRURadixCache(BasePrefixCache):
         self.distinct_element = set()
         self.phase_cache_k = 1
         self.phase_err_param = 1
-        self.pred_evicted_ts = {}
-        self.lru_evicted_ts = {}
+        self.pred_evicted = set()
+        self.lru_evicted = set()
         self.inv_count = 0
-        self.sorted_list = SortedList()
+        self.U: Set[TreeNode] = set()
         self.lru_budget = 0
         self.lru_evict_count = 0
         self.pred_evict_count = 0
@@ -193,6 +192,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         self.root_node.lock_ref = 1
         self.evictable_size_ = 0
         self.protected_size_ = 0
+        self.U.clear()
 
         if self.degrade_to_lru == True or self.waiting_queue_cache == True:
             return
@@ -203,15 +203,28 @@ class PhaseLRURadixCache(BasePrefixCache):
         logger.info(f"start a new phase, current_node_count: {TreeNode.counter - self.deleted_node_count}, decrease phase_err_param from {self.phase_err_param} to {int(math.sqrt(self.phase_err_param))}")
 
         self.phase_cache_k = TreeNode.counter - self.deleted_node_count
-        self.distinct_element = set()
-        #self.pred_evicted_ts = {}
-        #self.lru_evicted_ts = {}
+        self.distinct_element.clear()
+        self.pred_evicted.clear()
+        self.lru_evicted.clear()
         self.inv_count = 0
 
+        # Collect all cached nodes (excluding root)
+        all_nodes = []
+        stack = [self.root_node]
+        while stack:
+            node = stack.pop()
+            if node != self.root_node and not node.evicted:
+                all_nodes.append(node)
+
+            for child in node.children.values():
+                if not child.evicted:
+                    stack.append(child)
+
+        self.U = set(all_nodes)
+
         self.phase_err_param = int(math.sqrt(self.phase_err_param))
-        #self.sorted_list = SortedList()
         #self.lru_budget = 10000000
-        self.lru_budget = 0
+        self.lru_budget = self.lru_budget / 2
         #self.lru_budget = int(math.sqrt(self.lru_budget))
         
 
@@ -351,11 +364,11 @@ class PhaseLRURadixCache(BasePrefixCache):
             return
 
         address = hash(tuple(node.key))
-        if address in self.pred_evicted_ts:
-            if len(self.sorted_list) > 0 and self.pred_evicted_ts[address] > self.sorted_list[0]:
+        if address in self.pred_evicted:
+            if len(self.U) > 0:
                 self.pred_evict_count += 1
                 self.phase_err_param = min(self.phase_err_param * 2, 100000000)
-                rank = self.sorted_list.bisect_left(self.pred_evicted_ts[address])
+                rank = len(self.U)
                 self.pred_rank_sum += rank
                 logger.info(f"rank: {rank}, sum of inversions: {self.pred_rank_sum}, pred avg inv = {self.pred_rank_sum / self.pred_evict_count}")
                 #self.lru_budget = 0
@@ -365,9 +378,9 @@ class PhaseLRURadixCache(BasePrefixCache):
                 
                 logger.info(f"reset lru_budget = {self.lru_budget}, phase_err_param = {self.phase_err_param}")
 
-        if address in self.lru_evicted_ts:
+        if address in self.lru_evicted:
             self.lru_evict_count += 1
-            rank = self.sorted_list.bisect_left(self.lru_evicted_ts[address])
+            rank = len(self.U)
             self.lru_rank_sum += rank
             logger.info(f"lru_evicted, rank: {rank}, sum of inversions: {self.lru_rank_sum}, lru avg inv = {self.lru_rank_sum / self.lru_evict_count}")
 
@@ -557,7 +570,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             self._delete_leaf(x)
 
             if based_on_budget == True:
-                self.lru_evicted_ts[hash(tuple(x.key))] = self.current_ts
+                self.lru_evicted.add(hash(tuple(x.key)))
                 self.lru_budget -= 1
 
             if len(x.parent.children) == 0:
@@ -593,7 +606,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             if self.token_to_kv_pool_allocator:
                 self.token_to_kv_pool_allocator.free(x.value)
             num_evicted += len(x.value)
-            self.pred_evicted_ts[hash(tuple(x.key))] = self.current_ts
+            self.pred_evicted.add(hash(tuple(x.key)))
             self._delete_leaf(x)
 
             if len(x.parent.children) == 0 and x.parent != self.root_node and x.parent.lock_ref == 0:
@@ -712,11 +725,8 @@ class PhaseLRURadixCache(BasePrefixCache):
             self._start_new_phase()
 
         node.access_times += 1
-
-        if original_ts is not None:
-            self.sorted_list.discard(node.last_access_ts)
+        self.U.discard(node)
         node.last_access_ts = new_ts
-        self.sorted_list.add(node.last_access_ts)
     
     def _predictor_access(self, node: TreeNode, current_ts):
         if self.degrade_to_lru == True or self.waiting_queue_cache == True:
