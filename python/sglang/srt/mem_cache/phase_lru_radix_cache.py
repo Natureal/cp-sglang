@@ -210,7 +210,8 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         self.phase_err_param = int(math.sqrt(self.phase_err_param))
         #self.sorted_list = SortedList()
-        self.lru_budget = 10000000
+        #self.lru_budget = 10000000
+        self.lru_budget = 0
         #self.lru_budget = int(math.sqrt(self.lru_budget))
         
 
