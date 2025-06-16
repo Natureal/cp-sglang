@@ -822,6 +822,31 @@ def parse_args():
     )
     return parser.parse_args()
 
+def load_multiturn_data(tokenizer):
+    ret = []
+    if os.path.exists("synthetic_multiturn_510_requests.pkl"):
+        with open('synthetic_multiturn_510_requests.pkl', 'rb') as f:
+            prompt_ids_list = pickle.load(f)
+            for prompt_ids in prompt_ids_list:
+                ret.append(tokenizer.encode(prompt_ids[1]['text']))
+        print(f"total number of reqs: {len(ret)}")
+    else:
+        print(f"file not found")
+    return ret
+
+def load_stree_test_data(tokenizer):
+    ret = []
+    if os.path.exists("stress_test_token_id.pkl"):
+        with open('stress_test_token_id.pkl', 'rb') as f:
+            prompt_ids_list = pickle.load(f)
+            for prompt_ids in prompt_ids_list:
+                ret.append(prompt_ids)
+                #print(f"prompt: {tokenizer.decode(prompt_ids)}")
+        print(f"total number of sync reqs: {len(ret)}")
+    else:
+        print(f"file not found")
+    return ret
+
 if __name__ == "__main__":
     args = parse_args()
     tokenizer = get_tokenizer(args.model_path)
@@ -832,22 +857,8 @@ if __name__ == "__main__":
     tree.set_algo_type("phaselru")
     #tree.set_algo_type("belady") 
 
-    if os.path.exists("synthetic_multiturn_510_requests.pkl"):
-        with open('synthetic_multiturn_510_requests.pkl', 'rb') as f:
-            prompt_ids_list = pickle.load(f)
-            for prompt_ids in prompt_ids_list:
-                print(f"item: {tokenizer.encode(prompt_ids[1]['text'])}")
-                #print(f"prompt: {tokenizer.decode(prompt_ids)}")
-        #print(f"total number of sync reqs: {len(sync_send_req_set)}")
-
-    sync_send_req_set = []
-    if os.path.exists("stress_test_token_id.pkl"):
-        with open('stress_test_token_id.pkl', 'rb') as f:
-            prompt_ids_list = pickle.load(f)
-            for prompt_ids in prompt_ids_list:
-                sync_send_req_set.append(prompt_ids)
-                #print(f"prompt: {tokenizer.decode(prompt_ids)}")
-        print(f"total number of sync reqs: {len(sync_send_req_set)}")
+    sync_send_req_set = load_multiturn_data(tokenizer)
+    #sync_send_req_set = load_stree_test_data(tokenizer)
 
     current_ts = 0
     for req in sync_send_req_set:
