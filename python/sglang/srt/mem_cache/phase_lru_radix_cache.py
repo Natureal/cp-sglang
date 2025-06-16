@@ -808,8 +808,8 @@ def parse_args():
     return parser.parse_args()
 
 if __name__ == "__main__":
-    args = parse_args()
-    tokenizer = get_tokenizer(args.model_path)
+    #args = parse_args()
+    #tokenizer = get_tokenizer(args.model_path)
 
     tree = PhaseLRURadixCache(None, None, page_size=1, disable=False)
     #tree.set_algo_type("phaselru") #popu
