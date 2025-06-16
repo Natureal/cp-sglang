@@ -366,12 +366,12 @@ class PhaseLRURadixCache(BasePrefixCache):
         address = hash(tuple(node.key))
         if address in self.pred_evicted:
             if len(self.U) > 0:
-                self.pred_evict_count += 1
-                self.phase_err_param = min(self.phase_err_param * 2, 100000000)
                 rank = len(self.U)
+                self.pred_evict_count += 1
                 self.pred_rank_sum += rank
                 logger.info(f"rank: {rank}, sum of inversions: {self.pred_rank_sum}, pred avg inv = {self.pred_rank_sum / self.pred_evict_count}")
                 #self.lru_budget = 0
+                self.phase_err_param = min(self.phase_err_param * 2, 100000000)
                 self.lru_budget = min(self.lru_budget + self.phase_err_param, 100000000)
                 #self.lru_budget = self.phase_cache_k
                 print(f"reset lru_budget = {self.lru_budget}, phase_err_param = {self.phase_err_param}")
@@ -379,8 +379,8 @@ class PhaseLRURadixCache(BasePrefixCache):
                 logger.info(f"reset lru_budget = {self.lru_budget}, phase_err_param = {self.phase_err_param}")
 
         if address in self.lru_evicted:
-            self.lru_evict_count += 1
             rank = len(self.U)
+            self.lru_evict_count += 1
             self.lru_rank_sum += rank
             logger.info(f"lru_evicted, rank: {rank}, sum of inversions: {self.lru_rank_sum}, lru avg inv = {self.lru_rank_sum / self.lru_evict_count}")
 
