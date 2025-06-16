@@ -869,7 +869,7 @@ if __name__ == "__main__":
                 NRT[prefix_hash] = deque()
             NRT[prefix_hash].append(current_ts)
 
-    total_size = 30000
+    total_size = 80000
     req_count = 0
     current_size = 0
     total_hit_id_count = 0
