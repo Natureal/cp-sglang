@@ -885,8 +885,8 @@ if __name__ == "__main__":
 
     tree = PhaseLRURadixCache(None, None, page_size=1, disable=False)
     #tree.set_algo_type("phaselru") #popu
-    #tree.set_algo_type("lru")
-    tree.set_algo_type("phaselru")
+    tree.set_algo_type("lru")
+    #tree.set_algo_type("phaselru")
     #tree.set_algo_type("belady")
 
     sync_send_req_set = load_multiturn_data(tokenizer)
@@ -908,8 +908,8 @@ if __name__ == "__main__":
     #print(f"debug: {NRT[hash]}")
 
     #total_size = 76800 # 5%
-    total_size = 30700 # 2%
-    #total_size = 15360 # 1%
+    #total_size = 30700 # 2%
+    total_size = 15360 # 1%
     
     tree.phase_cache_k = total_size
     req_count = 0
