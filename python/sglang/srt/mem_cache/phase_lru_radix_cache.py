@@ -903,8 +903,10 @@ if __name__ == "__main__":
 
     #sync_send_req_set = load_multiturn_data(tokenizer)
     #data_type = "multiturn"
-    sync_send_req_set = load_stress_test_data(tokenizer)
-    data_type = "stress"
+    #sync_send_req_set = load_stress_test_data(tokenizer)
+    #data_type = "stress"
+    sync_send_req_set = load_poisson_multiturn_data(tokenizer)
+    data_type = "poisson_multiturn"
 
     if tree.algo_type == "belady":
         current_ts = 0
