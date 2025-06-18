@@ -141,7 +141,8 @@ class PhaseLRURadixCache(BasePrefixCache):
         self.evictable_size_ = 0
 
         # phase-level
-        self.distinct_element = set()
+        self.distinct_hash = set()
+        self.distinct_item_count = 0
         self.phase_cache_k = 1
         self.phase_err_param = 1
         self.pred_evicted = set()
@@ -244,7 +245,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             if prefix_len < len(node.key):
                 # originial_key is splitted into node.key and new_node.key
                 new_node = self._split_node(node.hash_value, node, prefix_len)
-                self._record_access(new_node, None, node.last_access_ts)
+                self._record_access(new_node, node.last_access_ts)
                 #self._judge_evicted_in_phase(node)
                 #self._judge_evicted_in_phase(new_node)
 
@@ -277,7 +278,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         
         if finished_req == True:
             self._predictor_access(node, self.current_ts)
-            self._record_access(node, node.last_access_ts, self.current_ts)
+            self._record_access(node, self.current_ts)
 
         child_key = self.get_child_key_fn(key)
 
@@ -287,7 +288,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             
             if finished_req == True:
                 self._predictor_access(node, self.current_ts)
-                self._record_access(node, node.last_access_ts, self.current_ts)
+                self._record_access(node, self.current_ts)
 
             prefix_len = self.key_match_fn(node.key, key)
             total_prefix_length += prefix_len
@@ -298,7 +299,7 @@ class PhaseLRURadixCache(BasePrefixCache):
                 # originial_key is splitted into node.key and new_node.key
                 new_node = self._split_node(node.hash_value, node, prefix_len)
                 # update ts for new_node
-                self._record_access(new_node, None, node.last_access_ts)
+                self._record_access(new_node, node.last_access_ts)
                 #self._judge_evicted_in_phase(node)
                 #self._judge_evicted_in_phase(new_node)
 
@@ -319,7 +320,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             new_node.value = value
             self._predictor_spawn(node, new_node)
             # copy ts from parent node when spawning node
-            self._record_access(new_node, None, node.last_access_ts)
+            self._record_access(new_node, node.last_access_ts)
             self._judge_evicted_in_phase(new_node)
 
             node.children[child_key] = new_node
@@ -337,8 +338,9 @@ class PhaseLRURadixCache(BasePrefixCache):
         logger.info(f"start a new phase, current_node_count: {TreeNode.counter - self.deleted_node_count}")
         print(f"start a new phase, current_node_count: {TreeNode.counter - self.deleted_node_count}")
 
-        self.phase_cache_k = TreeNode.counter - self.deleted_node_count
-        self.distinct_element.clear()
+        #self.phase_cache_k = TreeNode.counter - self.deleted_node_count
+        self.distinct_hash.clear()
+        self.distinct_item_count = 0
         self.pred_evicted.clear()
         self.lru_evicted.clear()
         self.inv_count = 0
@@ -743,13 +745,16 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         return new_node
     
-    def _record_access(self, node: TreeNode, original_ts, new_ts):
+    def _record_access(self, node: TreeNode, new_ts):
         if self.degrade_to_lru == True or self.waiting_queue_cache == True:
             node.last_access_ts = new_ts
             return
 
-        self.distinct_element.add(node.hash_value)
-        if len(self.distinct_element) >= self.phase_cache_k:
+        if node.hash_value not in self.distinct_hash:
+            self.distinct_hash.add(node.hash_value)
+            self.distinct_item_count += len(node.key)
+
+        if self.distinct_item_count >= self.phase_cache_k:
             self._start_new_phase()
 
         node.access_times += 1
@@ -903,6 +908,7 @@ if __name__ == "__main__":
     #print(f"debug: {NRT[hash]}")
 
     total_size = 60000
+    tree.phase_cache_k = total_size
     req_count = 0
     current_size = 0
     total_hit_id_count = 0
