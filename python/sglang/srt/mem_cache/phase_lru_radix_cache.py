@@ -861,8 +861,8 @@ if __name__ == "__main__":
     tree.set_algo_type("phaselru")
     #tree.set_algo_type("belady")
 
-    sync_send_req_set = load_multiturn_data(tokenizer)
-    #sync_send_req_set = load_stree_test_data(tokenizer)
+    #sync_send_req_set = load_multiturn_data(tokenizer)
+    sync_send_req_set = load_stree_test_data(tokenizer)
 
     current_ts = 0
     for req in sync_send_req_set:
