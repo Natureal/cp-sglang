@@ -380,7 +380,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             self.phase_err_param = min(self.phase_err_param * 2, 100000000)
             self.lru_budget = min(self.lru_budget + self.phase_err_param, 100000000)
             #self.lru_budget = self.phase_cache_k
-            print(f"reset lru_budget = {self.lru_budget}, phase_err_param = {self.phase_err_param}")
+            print(f"current_ts = {self.current_ts}, reset lru_budget = {self.lru_budget}, phase_err_param = {self.phase_err_param}")
             
             logger.info(f"reset lru_budget = {self.lru_budget}, phase_err_param = {self.phase_err_param}")
 
