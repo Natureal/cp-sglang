@@ -885,8 +885,8 @@ if __name__ == "__main__":
 
     tree = PhaseLRURadixCache(None, None, page_size=1, disable=False)
     #tree.set_algo_type("phaselru") #popu
-    #tree.set_algo_type("lru")
-    tree.set_algo_type("phaselru")
+    tree.set_algo_type("lru")
+    #tree.set_algo_type("phaselru")
     #tree.set_algo_type("belady")
 
     #sync_send_req_set = load_multiturn_data(tokenizer)
@@ -894,15 +894,15 @@ if __name__ == "__main__":
     sync_send_req_set = load_stress_test_data(tokenizer)
     data_type = "stress"
 
-    #if tree.algo_type == "belady":
-    current_ts = 0
-    for req in sync_send_req_set:
-        current_ts += 1
-        for j in range(len(req)):
-            prefix_hash = hash(tuple(req[:j + 1]))
-            if prefix_hash not in NRT:
-                NRT[prefix_hash] = deque()
-            NRT[prefix_hash].append(current_ts)
+    if tree.algo_type == "belady":
+        current_ts = 0
+        for req in sync_send_req_set:
+            current_ts += 1
+            for j in range(len(req)):
+                prefix_hash = hash(tuple(req[:j + 1]))
+                if prefix_hash not in NRT:
+                    NRT[prefix_hash] = deque()
+                NRT[prefix_hash].append(current_ts)
 
     #hash = -4232634994979945749
     #print(f"debug: {NRT[hash]}")
@@ -921,12 +921,12 @@ if __name__ == "__main__":
             print(f"evicted {len(req)}")
 
         # start access
-        #if tree.algo_type == "belady":
-        for j in range(len(req)):
-            prefix_hash = hash(tuple(req[:j + 1]))
-            if prefix_hash == -4232634994979945749:
-                print(f"-4232634994979945749 req count = {req_count + 1}")
-            NRT_truth[prefix_hash] = NRT[prefix_hash].popleft()
+        if tree.algo_type == "belady":
+            for j in range(len(req)):
+                prefix_hash = hash(tuple(req[:j + 1]))
+                if prefix_hash == -4232634994979945749:
+                    print(f"-4232634994979945749 req count = {req_count + 1}")
+                NRT_truth[prefix_hash] = NRT[prefix_hash].popleft()
 
         prefix, _ = tree.match_prefix(req)
         total_hit_id_count += len(prefix)
