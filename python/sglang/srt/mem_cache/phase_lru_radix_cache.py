@@ -889,10 +889,10 @@ if __name__ == "__main__":
     #tree.set_algo_type("phaselru")
     tree.set_algo_type("belady")
 
-    sync_send_req_set = load_multiturn_data(tokenizer)
-    data_type = "multiturn"
-    #sync_send_req_set = load_stress_test_data(tokenizer)
-    #data_type = "stress"
+    #sync_send_req_set = load_multiturn_data(tokenizer)
+    #data_type = "multiturn"
+    sync_send_req_set = load_stress_test_data(tokenizer)
+    data_type = "stress"
 
     if tree.algo_type == "belady":
         current_ts = 0
@@ -907,9 +907,9 @@ if __name__ == "__main__":
     #hash = -4232634994979945749
     #print(f"debug: {NRT[hash]}")
 
-    #total_size = 76800 # 5%
+    total_size = 76800 # 5%
     #total_size = 30700 # 2%
-    total_size = 15360 # 1%
+    #total_size = 15360 # 1%
     
     tree.phase_cache_k = total_size
     req_count = 0
