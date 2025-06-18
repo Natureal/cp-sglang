@@ -913,6 +913,7 @@ if __name__ == "__main__":
     current_size = 0
     total_hit_id_count = 0
     total_req_id_count = 0
+    total_req_len = 0
     for req in sync_send_req_set:
         if current_size + len(req) > total_size:
             #evicted_num = tree.evict(len(req))
@@ -938,13 +939,14 @@ if __name__ == "__main__":
         current_size += len(req) - len(prefix)
 
         req_count += 1
+        total_req_len += len(req)
         #captured = tree._capture_print()
         #logger.info(f"---------------------------------------------------- tree structure: {captured}")
         if req_count >= 1000000:
             break
 
     tree.pretty_print()
-    print(f"total_size = {total_size}, req_count = {req_count}, algo = {tree.algo_type}, data type = {data_type}")
+    print(f"total_size = {total_size}, req_count = {req_count}, total_req_len = {total_req_len}, algo = {tree.algo_type}, data type = {data_type}")
     print(f"Cache hit ratio: {total_hit_id_count / total_req_id_count}, avg hit id count = {total_hit_id_count / req_count}, avg req id count = {total_req_id_count / req_count}")
 
     #tree.insert("Hello")
