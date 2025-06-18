@@ -866,6 +866,18 @@ def load_multiturn_data(tokenizer):
         print(f"file not found")
     return ret
 
+def load_poisson_multiturn_data(tokenizer):
+    ret = []
+    if os.path.exists("synthetic_poisson_multiturn_510_requests.pkl"):
+        with open('synthetic_poisson_multiturn_510_requests.pkl', 'rb') as f:
+            prompt_ids_list = pickle.load(f)
+            for prompt_ids in prompt_ids_list:
+                ret.append(tokenizer.encode(prompt_ids[1]['text']))
+        print(f"total number of possion multiturn reqs: {len(ret)}")
+    else:
+        print(f"file not found")
+    return ret
+
 def load_stress_test_data(tokenizer):
     ret = []
     if os.path.exists("stress_test_token_id.pkl"):
