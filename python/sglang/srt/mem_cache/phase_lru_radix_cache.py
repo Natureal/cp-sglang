@@ -899,7 +899,8 @@ if __name__ == "__main__":
                 NRT[prefix_hash] = deque()
             NRT[prefix_hash].append(current_ts)
 
-    print(f"debug: {NRT[-4232634994979945749]}")
+    hash = -4232634994979945749
+    print(f"debug: {NRT[hash]}")
 
     total_size = 60000
     req_count = 0
