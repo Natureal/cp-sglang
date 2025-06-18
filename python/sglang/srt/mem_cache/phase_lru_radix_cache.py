@@ -890,9 +890,10 @@ if __name__ == "__main__":
     total_hit_id_count = 0
     total_req_id_count = 0
     for req in sync_send_req_set:
-        for j in range(len(req)):
-            prefix_hash = hash(tuple(req[:j + 1]))
-            NRT[prefix_hash].popleft()
+        if tree.algo_type == "belady":
+            for j in range(len(req)):
+                prefix_hash = hash(tuple(req[:j + 1]))
+                NRT[prefix_hash].popleft()
 
         #print(f"req count {req_count}, print")
         #tree.pretty_print()
