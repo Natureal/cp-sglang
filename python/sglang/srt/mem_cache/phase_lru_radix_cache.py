@@ -333,9 +333,8 @@ class PhaseLRURadixCache(BasePrefixCache):
     
     def _start_new_phase(self):
         logger.info(f"phase_cache_k = {self.phase_cache_k}, new phase_cache_k =  {TreeNode.counter - self.deleted_node_count}")
-        logger.info(f"start a new phase, current_node_count: {TreeNode.counter - self.deleted_node_count}, decrease phase_err_param from {self.phase_err_param} to {int(math.sqrt(self.phase_err_param))}")
-        
-        print(f"start a new phase, current_node_count: {TreeNode.counter - self.deleted_node_count}, decrease phase_err_param from {self.phase_err_param} to {int(math.sqrt(self.phase_err_param))}")
+        logger.info(f"start a new phase, current_node_count: {TreeNode.counter - self.deleted_node_count}")
+        print(f"start a new phase, current_node_count: {TreeNode.counter - self.deleted_node_count}")
 
         self.phase_cache_k = TreeNode.counter - self.deleted_node_count
         self.distinct_element.clear()
@@ -525,10 +524,11 @@ class PhaseLRURadixCache(BasePrefixCache):
     def total_size(self):
         return self._total_size_helper()
  
-    def belady_predict(self, key):
-        if len(NRT[key]) == 0:
+    def belady_predict(self, hash):
+        print(f"NRT[{hash}] = {NRT[hash]}")
+        if len(NRT[hash]) == 0:
             return 100000000
-        return NRT[key][0]
+        return NRT[hash][0]
 
     def _predict(self, nodes: List[TreeNode]):
         if self.algo_type == "belady":
