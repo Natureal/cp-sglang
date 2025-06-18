@@ -536,6 +536,10 @@ class PhaseLRURadixCache(BasePrefixCache):
             for node in nodes:
                 node.pred = self.belady_predict(node.hash_value)
                 node.pred_valid = 1
+
+            for node in nodes:
+                print(f"node hash_value = {node.hash_value}, pred = {node.pred}, truth = {NRT[node.hash_value][0] if len(NRT[node.hash_value]) > 0 else 10000000}")
+
             return
 
         node_to_pred = []
