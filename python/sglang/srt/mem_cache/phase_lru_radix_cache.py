@@ -332,6 +332,8 @@ class PhaseLRURadixCache(BasePrefixCache):
     def _start_new_phase(self):
         logger.info(f"phase_cache_k = {self.phase_cache_k}, new phase_cache_k =  {TreeNode.counter - self.deleted_node_count}")
         logger.info(f"start a new phase, current_node_count: {TreeNode.counter - self.deleted_node_count}, decrease phase_err_param from {self.phase_err_param} to {int(math.sqrt(self.phase_err_param))}")
+        
+        print(f"start a new phase, current_node_count: {TreeNode.counter - self.deleted_node_count}, decrease phase_err_param from {self.phase_err_param} to {int(math.sqrt(self.phase_err_param))}")
 
         self.phase_cache_k = TreeNode.counter - self.deleted_node_count
         self.distinct_element.clear()
