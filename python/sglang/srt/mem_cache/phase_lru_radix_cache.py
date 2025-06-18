@@ -366,6 +366,7 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         address = hash(tuple(node.key))
         if address in self.pred_evicted:
+            print(f"size of self.U = {len(self.U)}")
             if len(self.U) > 0:
                 rank = len(self.U)
                 self.pred_evict_count += 1
