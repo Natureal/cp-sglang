@@ -911,6 +911,8 @@ if __name__ == "__main__":
         #if tree.algo_type == "belady":
         for j in range(len(req)):
             prefix_hash = hash(tuple(req[:j + 1]))
+            if prefix_hash == -4232634994979945749:
+                print(f"-4232634994979945749 req count = {req_count + 1}")
             NRT_truth[prefix_hash] = NRT[prefix_hash].popleft()
 
         #print(f"req count {req_count}, print")
