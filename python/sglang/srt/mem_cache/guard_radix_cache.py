@@ -307,7 +307,8 @@ class GuardRadixCache(BasePrefixCache):
             if x.lock_ref > 0:
                 continue
 
-            self.token_to_kv_pool_allocator.free(x.value)
+            if self.token_to_kv_pool_allocator:
+                self.token_to_kv_pool_allocator.free(x.value)
             num_evicted += len(x.value)
             self._delete_leaf(x)
 
@@ -344,7 +345,8 @@ class GuardRadixCache(BasePrefixCache):
         if self.disable:
             return
         
-        self.token_to_kv_pool_allocator.record_eviction(num_tokens)
+        if self.token_to_kv_pool_allocator:
+            self.token_to_kv_pool_allocator.record_eviction(num_tokens)
         
         if self.degrade_to_lru == True:
             self._evict_by_lru(num_tokens)
@@ -381,7 +383,8 @@ class GuardRadixCache(BasePrefixCache):
 
             # Step 4: Perform eviction
             evictable_leaves.remove(victim)
-            self.token_to_kv_pool_allocator.free(victim.value)
+            if self.token_to_kv_pool_allocator:
+                self.token_to_kv_pool_allocator.free(victim.value)
             num_evicted += len(victim.value)
             
             # Mark as evicted in current phase
@@ -404,7 +407,8 @@ class GuardRadixCache(BasePrefixCache):
             kv_indices = self.req_to_token_pool.req_to_token[
                 req.req_pool_idx, : len(req.origin_input_ids) + len(req.output_ids) - 1
             ]
-            self.token_to_kv_pool_allocator.free(kv_indices)
+            if self.token_to_kv_pool_allocator:
+                self.token_to_kv_pool_allocator.free(kv_indices)
             self.req_to_token_pool.free(req.req_pool_idx)
             return
 
@@ -416,7 +420,8 @@ class GuardRadixCache(BasePrefixCache):
         if self.page_size != 1:
             page_aligned_len = len(kv_indices) // self.page_size * self.page_size
             page_aligned_kv_indices = kv_indices[:page_aligned_len].clone()
-            self.token_to_kv_pool_allocator.free(kv_indices[page_aligned_len:])
+            if self.token_to_kv_pool_allocator:
+                self.token_to_kv_pool_allocator.free(kv_indices[page_aligned_len:])
         else:
             page_aligned_len = len(kv_indices)
             page_aligned_kv_indices = kv_indices.clone()
@@ -425,9 +430,10 @@ class GuardRadixCache(BasePrefixCache):
         new_prefix_len = self.insert(
             token_ids[:page_aligned_len], page_aligned_kv_indices, True
         )
-        self.token_to_kv_pool_allocator.free(
-            kv_indices[len(req.prefix_indices) : new_prefix_len]
-        )
+        if self.token_to_kv_pool_allocator:
+            self.token_to_kv_pool_allocator.free(
+                kv_indices[len(req.prefix_indices) : new_prefix_len]
+            )
 
         # Remove req slot release the cache lock
         self.req_to_token_pool.free(req.req_pool_idx)
@@ -479,9 +485,10 @@ class GuardRadixCache(BasePrefixCache):
 
         # Radix Cache takes one ref in memory pool
         new_prefix_len = self.insert(page_aligned_token_ids, page_aligned_kv_indices)
-        self.token_to_kv_pool_allocator.free(
-            kv_indices[len(req.prefix_indices) : new_prefix_len]
-        )
+        if self.token_to_kv_pool_allocator:
+            self.token_to_kv_pool_allocator.free(
+                kv_indices[len(req.prefix_indices) : new_prefix_len]
+            )
 
         # The prefix indices could be updated, reuse it
         new_indices, new_last_node = self.match_prefix(page_aligned_token_ids)
