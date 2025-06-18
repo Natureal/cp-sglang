@@ -543,7 +543,7 @@ class PhaseLRURadixCache(BasePrefixCache):
                 node.pred_valid = 1
 
             for node in nodes:
-                print(f"node hash_value = {node.hash_value}, pred = {node.pred}, truth = {NRT[node.hash_value][0] if len(NRT[node.hash_value]) > 0 else 10000000}")
+                print(f"node hash_value = {node.hash_value}, pred = {node.pred}, truth = {str(NRT[node.hash_value])}")
 
             return
 
