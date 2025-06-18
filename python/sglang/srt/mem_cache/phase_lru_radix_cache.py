@@ -361,8 +361,8 @@ class PhaseLRURadixCache(BasePrefixCache):
         #if self.lru_evict_count > 0 and self.pred_evict_count > 0 \
         #     and 2 * self.lru_rank_sum / self.lru_evict_count > self.pred_rank_sum / self.pred_evict_count:
         #    self.phase_err_param = self.phase_err_param / 2
-        self.phase_err_param = self.phase_err_param / 2
-        self.lru_budget = self.lru_budget / 2
+        self.phase_err_param = min(self.phase_err_param / 2, 1)
+        self.lru_budget = math.floor(self.lru_budget / 2)
         #self.lru_budget = self.lru_budget
     
     def _judge_evicted_in_phase(self, node: TreeNode):
