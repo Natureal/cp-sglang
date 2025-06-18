@@ -72,6 +72,7 @@ class TreeNode:
         self.access_times = 0
 
         self.prefix_key = None
+        self.hash_value = None
 
         self.hit_count = 0
         # indicating the node is loading KV cache from host
@@ -188,6 +189,7 @@ class PhaseLRURadixCache(BasePrefixCache):
     def reset(self):
         self.root_node = TreeNode()
         self.root_node.key = []
+        self.root_node.prefix_key = None
         self.root_node.value = []
         self.root_node.lock_ref = 1
         self.evictable_size_ = 0
@@ -240,10 +242,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             prefix_len = self.key_match_fn(node.key, key)
             if prefix_len < len(node.key):
                 # originial_key is splitted into node.key and new_node.key
-                # node spawns new_node
-                original_key = node.key
-                new_node = self._split_node(node.key, node, prefix_len)
-                self._predictor_split(original_key, node, new_node)
+                new_node = self._split_node(node.hash_value, node, prefix_len)
                 self._record_access(new_node, None, node.last_access_ts)
                 #self._judge_evicted_in_phase(node)
                 #self._judge_evicted_in_phase(new_node)
@@ -295,13 +294,12 @@ class PhaseLRURadixCache(BasePrefixCache):
             value = value[prefix_len:]
 
             if prefix_len < len(node.key):
-                original_key = node.key
-                new_node = self._split_node(node.key, node, prefix_len)
-                self._predictor_split(original_key, node, new_node)
                 # originial_key is splitted into node.key and new_node.key
+                new_node = self._split_node(node.hash_value, node, prefix_len)
+                # update ts for new_node
                 self._record_access(new_node, None, node.last_access_ts)
-                self._judge_evicted_in_phase(node)
-                self._judge_evicted_in_phase(new_node)
+                #self._judge_evicted_in_phase(node)
+                #self._judge_evicted_in_phase(new_node)
 
                 node = new_node
 
@@ -316,6 +314,7 @@ class PhaseLRURadixCache(BasePrefixCache):
                 new_node.prefix_key = node.prefix_key + node.key
             else:
                 new_node.prefix_key = node.key
+            self._generate_node_hash_value(new_node)
             new_node.value = value
             self._predictor_spawn(node, new_node)
             # copy ts from parent node when spawning node
@@ -328,6 +327,9 @@ class PhaseLRURadixCache(BasePrefixCache):
         if self.token_to_kv_pool_allocator:
             self.token_to_kv_pool_allocator.evictable_size = self.evictable_size_
         return total_prefix_length
+    
+    def _generate_node_hash_value(self, node):
+        node.hash_value = hash(tuple(node.prefix_key + [node.key[0]]))
     
     def _start_new_phase(self):
         logger.info(f"phase_cache_k = {self.phase_cache_k}, new phase_cache_k =  {TreeNode.counter - self.deleted_node_count}")
@@ -366,8 +368,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         if self.degrade_to_lru == True or self.waiting_queue_cache == True:
             return
 
-        address = hash(tuple(node.key))
-        if address in self.pred_evicted:
+        if node.hash_value in self.pred_evicted:
             print(f"size of self.U = {len(self.U)}")
             if len(self.U) > 0:
                 rank = len(self.U)
@@ -382,7 +383,7 @@ class PhaseLRURadixCache(BasePrefixCache):
                 
                 logger.info(f"reset lru_budget = {self.lru_budget}, phase_err_param = {self.phase_err_param}")
 
-        if address in self.lru_evicted:
+        if node.hash_value in self.lru_evicted:
             if len(self.U) > 0:
                 rank = len(self.U)
                 self.lru_evict_count += 1
@@ -531,8 +532,7 @@ class PhaseLRURadixCache(BasePrefixCache):
     def _predict(self, nodes: List[TreeNode]):
         if self.algo_type == "belady":
             for node in nodes:
-                node.pred = self.belady_predict(hash(tuple(node.prefix_key + node.key)))
-                #print(f"pred, key = {node.key[0]}, pred = {node.pred}") #, full key = {node.key}")
+                node.pred = self.belady_predict(node.hash_value)
                 node.pred_valid = 1
             return
 
@@ -541,7 +541,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         for node in nodes:
             if node.pred_valid == 0:
                 node_to_pred.append(node)
-                addresses.append(hash(tuple(node.key)))
+                addresses.append(node.hash_value)
 
         if len(node_to_pred) > 0:
             preds = self.predictor.predict(addresses)
@@ -575,7 +575,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             self._delete_leaf(x)
 
             if based_on_budget == True:
-                self.lru_evicted.add(hash(tuple(x.key)))
+                self.lru_evicted.add(x.hash_value)
                 self.lru_budget -= 1
 
             if len(x.parent.children) == 0:
@@ -611,7 +611,8 @@ class PhaseLRURadixCache(BasePrefixCache):
             if self.token_to_kv_pool_allocator:
                 self.token_to_kv_pool_allocator.free(x.value)
             num_evicted += len(x.value)
-            self.pred_evicted.add(hash(tuple(x.key)))
+            #self.pred_evicted.add(hash(tuple(x.key)))
+            self.pred_evicted.add(x.hash_value)
             self._delete_leaf(x)
 
             if len(x.parent.children) == 0 and x.parent != self.root_node and x.parent.lock_ref == 0:
@@ -703,20 +704,26 @@ class PhaseLRURadixCache(BasePrefixCache):
 
     ##### Internal Helper Functions #####
 
-    def _split_node(self, key, child: TreeNode, split_len: int):
+    def _split_node(self, hash_value, child: TreeNode, split_len: int):
         # new_node -> child
         new_node = TreeNode()
-        new_node.children = {self.get_child_key_fn(key[split_len:]): child}
+        new_node.children = {self.get_child_key_fn(child.key[split_len:]): child}
         new_node.parent = child.parent
         new_node.lock_ref = child.lock_ref
         new_node.key = child.key[:split_len]
         new_node.prefix_key = child.prefix_key # added
+        self._generate_node_hash_value(new_node)
         new_node.value = child.value[:split_len]
+        new_node.parent.children[self.get_child_key_fn(new_node.key)] = new_node
+
         child.parent = new_node
         child.key = child.key[split_len:]
         child.prefix_key = child.prefix_key + new_node.key
+        self._generate_node_hash_value(child)
         child.value = child.value[split_len:]
-        new_node.parent.children[self.get_child_key_fn(key)] = new_node
+        
+        # update info for predictor after splitting
+        self._predictor_split(hash_value, child, new_node)
 
         return new_node
     
@@ -725,7 +732,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             node.last_access_ts = new_ts
             return
 
-        self.distinct_element.add(hash(tuple(node.key)))
+        self.distinct_element.add(node.hash_value)
         if len(self.distinct_element) >= self.phase_cache_k:
             self._start_new_phase()
 
@@ -737,26 +744,26 @@ class PhaseLRURadixCache(BasePrefixCache):
         if self.degrade_to_lru == True or self.waiting_queue_cache == True:
             return
 
-        self.predictor.access(hash(tuple(node.key)), current_ts)
+        self.predictor.access(node.hash_value, current_ts)
         node.pred_valid = 0
 
-    def _predictor_split(self, original_key, node: TreeNode, new_node: TreeNode):
+    def _predictor_split(self, original_hash, node: TreeNode, new_node: TreeNode):
         if self.degrade_to_lru == True or self.waiting_queue_cache == True:
             return
-        self._predictor_feature_copy(original_key, node.key)
-        self._predictor_feature_copy(original_key, new_node.key)
-        self.predictor.feature_delete(hash(tuple(original_key)))
+        self._predictor_feature_copy(original_hash, node.hash_value)
+        self._predictor_feature_copy(original_hash, new_node.hash_value)
+        self.predictor.feature_delete(original_hash)
         # copy pred from original node
         new_node.pred_valid = node.pred_valid
         new_node.pred = node.pred
 
-    def _predictor_feature_copy(self, key, new_key):
-        self.predictor.feature_copy(hash(tuple(key)), hash(tuple(new_key)))
+    def _predictor_feature_copy(self, hash_value, new_hash_value):
+        self.predictor.feature_copy(hash_value, new_hash_value)
 
     def _predictor_spawn(self, node: TreeNode, new_node: TreeNode):
         if self.degrade_to_lru == True or self.waiting_queue_cache == True:
             return
-        self._predictor_feature_copy(node.key, new_node.key)
+        self._predictor_feature_copy(node.hash_value, new_node.hash_value)
         # copy pred from parent node
         new_node.pred_valid = node.pred_valid
         new_node.pred = node.pred
