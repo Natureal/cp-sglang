@@ -363,7 +363,7 @@ class WorkloadGenerator:
                 #print(f"client_id: {current_client_id}, request_rate: {request_rate_map[current_client_id]}, corres idx: {idx}")
                 # Calculate Poisson-distributed wait time
                 if self.distribution == "poisson":
-                    sleep_time = 10 #random.expovariate(min(request_rate_map[current_client_id], 30))
+                    sleep_time = random.expovariate(request_rate_map[current_client_id])
                 elif self.distribution == "uniform":
                     avg_interval = (
                         1.0 / request_rate_map[current_client_id] if request_rate_map[current_client_id]> 0 else 1.0
@@ -501,7 +501,7 @@ class WorkloadGenerator:
 
         if self.synthetic_multiturn_requests is None:
             num_req = len(request_history)
-            with open(f"synthetic_multiturn_{num_req}_requests.pkl", 'wb') as f:
+            with open(f"synthetic_poisson_multiturn_{num_req}_requests.pkl", 'wb') as f:
                 pickle.dump(request_history, f)
 
 if __name__ == "__main__":
