@@ -741,6 +741,8 @@ class PhaseLRURadixCache(BasePrefixCache):
         
         if node.hash_value is not None and original_ts is not None:
             print(f"node hash_value = {node.hash_value}, current_ts = {self.current_ts}, NRT truth = {NRT_truth[node.hash_value]}")
+            if self.current_ts != NRT_truth[node.hash_value]:
+                print(f"!!!!!!!!!!!!!!!!!!! error !!!!!!!!!!!!!!!! of NRT truth")
 
         self.distinct_element.add(node.hash_value)
         if len(self.distinct_element) >= self.phase_cache_k:
