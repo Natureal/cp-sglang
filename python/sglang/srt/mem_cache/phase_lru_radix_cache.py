@@ -907,7 +907,7 @@ if __name__ == "__main__":
     #hash = -4232634994979945749
     #print(f"debug: {NRT[hash]}")
 
-    total_size = 60000
+    total_size = 80000
     tree.phase_cache_k = total_size
     req_count = 0
     current_size = 0
