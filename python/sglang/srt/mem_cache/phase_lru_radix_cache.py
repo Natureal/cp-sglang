@@ -55,6 +55,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 NRT = {}
+NRT_truth = {}
 
 class TreeNode:
 
@@ -554,9 +555,9 @@ class PhaseLRURadixCache(BasePrefixCache):
                     node.pred = node.last_access_ts + preds[i]
                 node.pred_valid = 1
 
-        for i in range(len(node_to_pred)):
-            node = node_to_pred[i]
-            print(f"node key hash = {hash(tuple(node.key))}, hash_value = {node.hash_value}, pred = {node.pred}, truth = {NRT[node.hash_value][0] if len(NRT[node.hash_value]) > 0 else 10000000}")
+        #for i in range(len(node_to_pred)):
+        #    node = node_to_pred[i]
+        #    print(f"node key hash = {hash(tuple(node.key))}, hash_value = {node.hash_value}, pred = {node.pred}, truth = {NRT[node.hash_value][0] if len(NRT[node.hash_value]) > 0 else 10000000}")
 
     def _evict_by_lru(self, num_tokens: int, based_on_budget: bool):
         leaves = self._collect_leaves()
@@ -737,6 +738,8 @@ class PhaseLRURadixCache(BasePrefixCache):
         if self.degrade_to_lru == True or self.waiting_queue_cache == True:
             node.last_access_ts = new_ts
             return
+        
+        print(f"node hash_value = {node.hash_value}, NRT truth = {NRT_truth[node.hash_value]}")
 
         self.distinct_element.add(node.hash_value)
         if len(self.distinct_element) >= self.phase_cache_k:
@@ -898,7 +901,7 @@ if __name__ == "__main__":
         #if tree.algo_type == "belady":
         for j in range(len(req)):
             prefix_hash = hash(tuple(req[:j + 1]))
-            NRT[prefix_hash].popleft()
+            NRT_truth[prefix_hash] = NRT[prefix_hash].popleft()
 
         #print(f"req count {req_count}, print")
         #tree.pretty_print()
