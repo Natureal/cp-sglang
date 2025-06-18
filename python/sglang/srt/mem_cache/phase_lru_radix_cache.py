@@ -383,10 +383,11 @@ class PhaseLRURadixCache(BasePrefixCache):
             self.pred_evict_count += 1
             self.pred_rank_sum += rank
             logger.info(f"rank: {rank}, sum of inversions: {self.pred_rank_sum}, pred avg inv = {self.pred_rank_sum / self.pred_evict_count}")
-            #self.lru_budget = 0
-            self.phase_err_param = min(self.phase_err_param * 2, 100000000)
-            self.lru_budget = min(self.lru_budget + self.phase_err_param, 100000000)
-            #self.lru_budget = self.phase_cache_k
+            if self.algo_type == "blindoracle":
+                self.lru_budget = 0
+            else:
+                self.phase_err_param = min(self.phase_err_param * 2, 100000000)
+                self.lru_budget = min(self.lru_budget + self.phase_err_param, 100000000)
             print(f"current_ts = {self.current_ts}, hash_value = {node.hash_value}, reset lru_budget = {self.lru_budget}, phase_err_param = {self.phase_err_param}")
             
             logger.info(f"reset lru_budget = {self.lru_budget}, phase_err_param = {self.phase_err_param}")
@@ -403,13 +404,16 @@ class PhaseLRURadixCache(BasePrefixCache):
             self.algo_type = algo_type
             if algo_type == "lru":
                 self.degrade_to_lru = True
-                logger.info(f"Caching algorithm switches from phaselru to lru")
+                logger.info(f"Caching algorithm switches to lru")
             elif algo_type == "phaselru":
                 self.degrade_to_lru = False
-                logger.info(f"Caching algorithm switches from lru to phaselru")
+                logger.info(f"Caching algorithm switches to phaselru")
             elif algo_type == "belady":
                 self.degrade_to_lru = False
-                logger.info(f"Caching algorithm switches from lru to belady")
+                logger.info(f"Caching algorithm switches to belady")
+            elif algo_type == "blindoracle":
+                self.degrade_to_lru = False
+                logger.info(f"Caching algorithm switches to blindoracle")
         else:
             logger.info(f"Caching algorithm is already {self.algo_type}")
 
@@ -899,7 +903,8 @@ if __name__ == "__main__":
     #tree.set_algo_type("phaselru") #popu
     #tree.set_algo_type("lru")
     #tree.set_algo_type("phaselru")
-    tree.set_algo_type("belady")
+    #tree.set_algo_type("belady")
+    tree.set_algo_type("blindoracle")
 
     #sync_send_req_set = load_multiturn_data(tokenizer)
     #data_type = "multiturn"
