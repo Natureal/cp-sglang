@@ -554,6 +554,9 @@ class PhaseLRURadixCache(BasePrefixCache):
                     node.pred = node.last_access_ts + preds[i]
                 node.pred_valid = 1
 
+        for i in range(len(node_to_pred)):
+            print(f"node pred = {node.pred}, truth = {NRT[node.hash_value][0]}")
+
     def _evict_by_lru(self, num_tokens: int, based_on_budget: bool):
         leaves = self._collect_leaves()
         heapq.heapify(leaves)
@@ -875,15 +878,15 @@ if __name__ == "__main__":
     #sync_send_req_set = load_stress_test_data(tokenizer)
     #data_type = "stress"
 
-    if tree.algo_type == "belady":
-        current_ts = 0
-        for req in sync_send_req_set:
-            current_ts += 1
-            for j in range(len(req)):
-                prefix_hash = hash(tuple(req[:j + 1]))
-                if prefix_hash not in NRT:
-                    NRT[prefix_hash] = deque()
-                NRT[prefix_hash].append(current_ts)
+    #if tree.algo_type == "belady":
+    current_ts = 0
+    for req in sync_send_req_set:
+        current_ts += 1
+        for j in range(len(req)):
+            prefix_hash = hash(tuple(req[:j + 1]))
+            if prefix_hash not in NRT:
+                NRT[prefix_hash] = deque()
+            NRT[prefix_hash].append(current_ts)
 
     total_size = 60000
     req_count = 0
@@ -891,10 +894,10 @@ if __name__ == "__main__":
     total_hit_id_count = 0
     total_req_id_count = 0
     for req in sync_send_req_set:
-        if tree.algo_type == "belady":
-            for j in range(len(req)):
-                prefix_hash = hash(tuple(req[:j + 1]))
-                NRT[prefix_hash].popleft()
+        #if tree.algo_type == "belady":
+        for j in range(len(req)):
+            prefix_hash = hash(tuple(req[:j + 1]))
+            NRT[prefix_hash].popleft()
 
         #print(f"req count {req_count}, print")
         #tree.pretty_print()
