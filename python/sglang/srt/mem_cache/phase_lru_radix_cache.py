@@ -885,9 +885,9 @@ if __name__ == "__main__":
 
     tree = PhaseLRURadixCache(None, None, page_size=1, disable=False)
     #tree.set_algo_type("phaselru") #popu
-    #tree.set_algo_type("lru")
+    tree.set_algo_type("lru")
     #tree.set_algo_type("phaselru")
-    tree.set_algo_type("belady")
+    #tree.set_algo_type("belady")
 
     sync_send_req_set = load_multiturn_data(tokenizer)
     data_type = "multiturn"
@@ -925,8 +925,6 @@ if __name__ == "__main__":
         if tree.algo_type == "belady":
             for j in range(len(req)):
                 prefix_hash = hash(tuple(req[:j + 1]))
-                if prefix_hash == -4232634994979945749:
-                    print(f"-4232634994979945749 req count = {req_count + 1}")
                 NRT_truth[prefix_hash] = NRT[prefix_hash].popleft()
 
         prefix, _ = tree.match_prefix(req)
