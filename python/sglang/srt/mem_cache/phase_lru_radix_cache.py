@@ -380,7 +380,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             self.phase_err_param = min(self.phase_err_param * 2, 100000000)
             self.lru_budget = min(self.lru_budget + self.phase_err_param, 100000000)
             #self.lru_budget = self.phase_cache_k
-            print(f"current_ts = {self.current_ts}, reset lru_budget = {self.lru_budget}, phase_err_param = {self.phase_err_param}")
+            print(f"current_ts = {self.current_ts}, hash_value = {node.hash_value}, reset lru_budget = {self.lru_budget}, phase_err_param = {self.phase_err_param}")
             
             logger.info(f"reset lru_budget = {self.lru_budget}, phase_err_param = {self.phase_err_param}")
 
@@ -612,7 +612,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             if x.lock_ref > 0:
                 continue
 
-            print(f"current ts = {self.current_ts}, evicted node pred = {x.pred}, last access ts = {x.last_access_ts}")
+            print(f"current ts = {self.current_ts}, evicted node pred = {x.pred}, hash_value = {x.hash_value}")
 
             if self.token_to_kv_pool_allocator:
                 self.token_to_kv_pool_allocator.free(x.value)
