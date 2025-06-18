@@ -846,7 +846,7 @@ def load_multiturn_data(tokenizer):
         print(f"file not found")
     return ret
 
-def load_stree_test_data(tokenizer):
+def load_stress_test_data(tokenizer):
     ret = []
     if os.path.exists("stress_test_token_id.pkl"):
         with open('stress_test_token_id.pkl', 'rb') as f:
@@ -865,13 +865,13 @@ if __name__ == "__main__":
 
     tree = PhaseLRURadixCache(None, None, page_size=1, disable=False)
     #tree.set_algo_type("phaselru") #popu
-    tree.set_algo_type("lru")
+    #tree.set_algo_type("lru")
     #tree.set_algo_type("phaselru")
-    #tree.set_algo_type("belady")
+    tree.set_algo_type("belady")
 
     #sync_send_req_set = load_multiturn_data(tokenizer)
     #data_type = "multiturn"
-    sync_send_req_set = load_stree_test_data(tokenizer)
+    sync_send_req_set = load_stress_test_data(tokenizer)
     data_type = "stress"
 
     if tree.algo_type == "belady":
