@@ -278,8 +278,8 @@ class WorkloadGenerator:
                     self.candidate_inputs.append(system_prefix_prompt + self.raw_candidate_inputs[i].prompt)
                     #print(f"i = {i}, init str = {str(self.candidate_inputs[-1])[:20]}")
 
-                with open('candidate_inputs.pkl', 'wb') as f:
-                    pickle.dump(self.candidate_inputs, f)
+                #with open('candidate_inputs.pkl', 'wb') as f:
+                #    pickle.dump(self.candidate_inputs, f)
 
             init_requests = [
                 (i, gen_payload(self.candidate_inputs[i], args.output_length))
