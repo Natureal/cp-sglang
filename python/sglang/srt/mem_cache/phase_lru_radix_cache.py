@@ -919,7 +919,7 @@ if __name__ == "__main__":
             break
 
     tree.pretty_print()
-    print(f"total_size = {total_size}, req_count = {req_count}, algo = {tree.algo_type}")
+    print(f"total_size = {total_size}, req_count = {req_count}, algo = {tree.algo_type}, data type = {data_type}")
     print(f"Cache hit ratio: {total_hit_id_count / total_req_id_count}, avg hit id count = {total_hit_id_count / req_count}, avg req id count = {total_req_id_count / req_count}")
 
     #tree.insert("Hello")
