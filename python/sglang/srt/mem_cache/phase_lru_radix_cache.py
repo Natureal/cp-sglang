@@ -840,7 +840,7 @@ def load_multiturn_data(tokenizer):
             prompt_ids_list = pickle.load(f)
             for prompt_ids in prompt_ids_list:
                 ret.append(tokenizer.encode(prompt_ids[1]['text']))
-        print(f"total number of reqs: {len(ret)}")
+        print(f"total number of multiturn reqs: {len(ret)}")
     else:
         print(f"file not found")
     return ret
@@ -853,7 +853,7 @@ def load_stree_test_data(tokenizer):
             for prompt_ids in prompt_ids_list:
                 ret.append(prompt_ids)
                 #print(f"prompt: {tokenizer.decode(prompt_ids)}")
-        print(f"total number of sync reqs: {len(ret)}")
+        print(f"total number of stress reqs: {len(ret)}")
     else:
         print(f"file not found")
     return ret
