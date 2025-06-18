@@ -525,7 +525,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         return self._total_size_helper()
  
     def belady_predict(self, hash):
-        print(f"NRT[{hash}] = {NRT[hash]}")
+        #print(f"NRT[{hash}] = {NRT[hash]}")
         if len(NRT[hash]) == 0:
             return 100000000
         return NRT[hash][0]
