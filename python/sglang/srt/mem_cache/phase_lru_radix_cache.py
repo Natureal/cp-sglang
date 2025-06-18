@@ -369,10 +369,10 @@ class PhaseLRURadixCache(BasePrefixCache):
         if self.degrade_to_lru == True or self.waiting_queue_cache == True:
             return
         
-        if node.hash_value is not None:
-            print(f"judge node hash_value = {node.hash_value}, current_ts = {self.current_ts}, NRT truth = {NRT_truth[node.hash_value]}")
-            if self.current_ts != NRT_truth[node.hash_value]:
-                print(f"!!!!!!!!!!!!!!!!!!! error !!!!!!!!!!!!!!!! of NRT truth")
+        #if node.hash_value is not None:
+        #    print(f"judge node hash_value = {node.hash_value}, current_ts = {self.current_ts}, NRT truth = {NRT_truth[node.hash_value]}")
+        #    if self.current_ts != NRT_truth[node.hash_value]:
+        #        print(f"!!!!!!!!!!!!!!!!!!! error !!!!!!!!!!!!!!!! of NRT truth")
 
         if node.hash_value in self.pred_evicted:
             #print(f"size of self.U = {len(self.U)}")
@@ -542,8 +542,8 @@ class PhaseLRURadixCache(BasePrefixCache):
                 node.pred = self.belady_predict(node.hash_value)
                 node.pred_valid = 1
 
-            for node in nodes:
-                print(f"node hash_value = {node.hash_value}, pred = {node.pred}, truth = {str(NRT[node.hash_value])}")
+            #for node in nodes:
+            #    print(f"node hash_value = {node.hash_value}, pred = {node.pred}, truth = {str(NRT[node.hash_value])}")
 
             return
 
@@ -602,9 +602,9 @@ class PhaseLRURadixCache(BasePrefixCache):
         leaves = self._collect_leaves()
         self._predict(leaves)
 
-        print(f"start pred")
-        for node in leaves:
-            print(f"current ts = {self.current_ts}, leaf node pred = {node.pred}")
+        #print(f"start pred")
+        #for node in leaves:
+        #    print(f"current ts = {self.current_ts}, leaf node pred = {node.pred}")
         #self.pretty_print()
 
         heap_by_pred = []
