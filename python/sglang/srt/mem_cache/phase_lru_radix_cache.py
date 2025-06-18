@@ -45,6 +45,7 @@ from sglang.srt.disaggregation.kv_events import (
 )
 from sglang.srt.managers.schedule_batch import global_server_args_dict
 from sglang.srt.mem_cache.base_prefix_cache import BasePrefixCache
+from sglang.srt.mem_cache.guard_radix_cache import GuardRadixCache
 from sglang.srt.mem_cache.memory_pool import ReqToTokenPool, TokenToKVPoolAllocator
 from sglang.srt.predictor.pleco import PLECOPredictor
 from sglang.srt.predictor.popu import POPUPredictor
@@ -899,7 +900,9 @@ if __name__ == "__main__":
     args = parse_args()
     tokenizer = get_tokenizer(args.model_path)
 
-    tree = PhaseLRURadixCache(None, None, page_size=1, disable=False)
+    #tree = PhaseLRURadixCache(None, None, page_size=1, disable=False)
+    tree = GuardRadixCache(None, None, page_size=1, disable=False)
+
     #tree.set_algo_type("phaselru") #popu
     #tree.set_algo_type("lru")
     #tree.set_algo_type("phaselru")
