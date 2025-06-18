@@ -874,14 +874,15 @@ if __name__ == "__main__":
     sync_send_req_set = load_stree_test_data(tokenizer)
     data_type = "stress"
 
-    current_ts = 0
-    for req in sync_send_req_set:
-        current_ts += 1
-        for j in range(len(req)):
-            prefix_hash = hash(tuple(req[:j + 1]))
-            if prefix_hash not in NRT:
-                NRT[prefix_hash] = deque()
-            NRT[prefix_hash].append(current_ts)
+    if tree.algo_type == "belady":
+        current_ts = 0
+        for req in sync_send_req_set:
+            current_ts += 1
+            for j in range(len(req)):
+                prefix_hash = hash(tuple(req[:j + 1]))
+                if prefix_hash not in NRT:
+                    NRT[prefix_hash] = deque()
+                NRT[prefix_hash].append(current_ts)
 
     total_size = 80000
     req_count = 0
