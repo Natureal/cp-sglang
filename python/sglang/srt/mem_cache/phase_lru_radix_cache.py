@@ -906,7 +906,7 @@ if __name__ == "__main__":
     #tree.set_algo_type("phaselru") #popu
     #tree.set_algo_type("lru")
     #tree.set_algo_type("phaselru")
-    tree.set_algo_type("belady")
+    #tree.set_algo_type("belady")
     #tree.set_algo_type("blindoracle")
 
     sync_send_req_set = load_multiturn_data(tokenizer)
