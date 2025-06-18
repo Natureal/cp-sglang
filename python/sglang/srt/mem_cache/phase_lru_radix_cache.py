@@ -665,19 +665,20 @@ class PhaseLRURadixCache(BasePrefixCache):
             print("set lru_budget = 0")
             self.lru_budget = 0
 
-        original_num_tokens = num_tokens
         if  self.lru_budget >= 1:
-            actual_evicted_num = self._evict_by_lru(num_tokens, True)
-            num_tokens -= actual_evicted_num
+            lru_evicted_num = self._evict_by_lru(num_tokens, True)
+            actual_evicted_num += lru_evicted_num
+            num_tokens -= lru_evicted_num
 
         if num_tokens > 0:
-            actual_evicted_num = self._evict_by_pred(num_tokens)
-            num_tokens -= actual_evicted_num
+            pred_evicted_num = self._evict_by_pred(num_tokens)
+            actual_evicted_num += pred_evicted_num
+            num_tokens -= pred_evicted_num
 
         if self.token_to_kv_pool_allocator:
             self.token_to_kv_pool_allocator.free_group_end()
 
-        return original_num_tokens - num_tokens
+        return actual_evicted_num
 
     def inc_lock_ref(self, node: TreeNode):
         if self.disable:

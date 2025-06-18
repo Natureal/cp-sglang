@@ -315,6 +315,8 @@ class GuardRadixCache(BasePrefixCache):
             if len(x.parent.children) == 0:
                 heapq.heappush(leaves, x.parent)
 
+        return num_evicted
+
     def _start_new_phase(self):
         """Start a new phase: unguard all cached pages and reset phase-specific flags."""
         self.current_phase += 1
@@ -349,8 +351,7 @@ class GuardRadixCache(BasePrefixCache):
             self.token_to_kv_pool_allocator.record_eviction(num_tokens)
         
         if self.degrade_to_lru == True:
-            self._evict_by_lru(num_tokens)
-            return
+            return self._evict_by_lru(num_tokens)
 
         num_evicted = 0
 
@@ -400,6 +401,8 @@ class GuardRadixCache(BasePrefixCache):
 
             if len(victim.parent.children) == 0 and victim.parent != self.root_node and victim.parent.lock_ref == 0:
                 evictable_leaves.append(victim.parent)
+
+        return num_evicted
 
     def cache_finished_req(self, req):
         """Cache request when it finishes."""
