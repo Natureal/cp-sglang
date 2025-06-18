@@ -636,7 +636,7 @@ class GuardRadixCache(BasePrefixCache):
         stack = [(node, indent)]
         while stack:
             current_node, current_indent = stack.pop()
-            guard_info = f"G={current_node.guarded}, E={current_node.evicted_in_phase}"
+            guard_info = f"G={current_node.guarded}"
             print(
                 " " * current_indent,
                 len(current_node.key),
