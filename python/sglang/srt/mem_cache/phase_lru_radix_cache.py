@@ -254,7 +254,7 @@ class PhaseLRURadixCache(BasePrefixCache):
                 if init_req == True:
                     #if node.hash_value == 5043749771647966909:
                     new_node.match_tag += 1
-                    print(f"increase tag 1: {new_node.hash_value}, value: {new_node.match_tag}")
+                    print(f"increase tag 2: {new_node.hash_value}, value: {new_node.match_tag}")
 
                 self._record_access(new_node, node.last_access_ts)
                 #self._judge_evicted_in_phase(node)
