@@ -1086,7 +1086,7 @@ class Scheduler(
         else:
             self.waiting_queue.append(req)
 
-    def _extend_requests_to_queue(self, reqs: List[Req], is_retracted: bool = False):
+    def  _extend_requests_to_queue(self, reqs: List[Req], is_retracted: bool = False):
         if self.disaggregation_mode == DisaggregationMode.DECODE:
             self.disagg_decode_prealloc_queue.extend(reqs)
         else:
