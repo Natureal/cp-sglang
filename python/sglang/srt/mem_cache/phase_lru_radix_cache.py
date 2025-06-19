@@ -968,11 +968,12 @@ if __name__ == "__main__":
         prefix, _ = tree.match_prefix(req, init_req=True)
         total_hit_id_count += len(prefix)
         total_req_id_count += len(req)
-        print(f"req_count = {req_count}, #req = {len(req)}, #prefix = {len(prefix)}, current_size = {current_size}")
 
         value = torch.zeros(len(req))
         tree.insert(req, value, True)
         current_size += len(req) - len(prefix)
+
+        print(f"req_count = {req_count}, #req = {len(req)}, #prefix = {len(prefix)}, current_size = {current_size}")
 
         req_count += 1
         total_req_len += len(req)
