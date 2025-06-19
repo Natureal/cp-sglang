@@ -244,10 +244,8 @@ class PhaseLRURadixCache(BasePrefixCache):
             node = node.children[child_key]
             if init_req == True:
                 #if node.hash_value == 5043749771647966909:
-                print(f"increase tag 1: {node.hash_value}")
                 node.match_tag += 1
-                if node.match_tag == 2:
-                    print(f"crazy, hash = {node.hash_value}")
+                print(f"increase tag 1: {node.hash_value}, value: {node.match_tag}")
 
             prefix_len = self.key_match_fn(node.key, key)
             if prefix_len < len(node.key):
@@ -255,8 +253,8 @@ class PhaseLRURadixCache(BasePrefixCache):
                 new_node = self._split_node(node.hash_value, node, prefix_len)
                 if init_req == True:
                     #if node.hash_value == 5043749771647966909:
-                    print(f"instease tag 2: {new_node.hash_value}")
                     new_node.match_tag += 1
+                    print(f"increase tag 1: {new_node.hash_value}, value: {new_node.match_tag}")
 
                 self._record_access(new_node, node.last_access_ts)
                 #self._judge_evicted_in_phase(node)
@@ -301,8 +299,8 @@ class PhaseLRURadixCache(BasePrefixCache):
             if finished_req == True:
                 self._predictor_access(node, self.current_ts)
                 self._record_access(node, self.current_ts)
-                print(f"decrease tag: {node.hash_value}")
                 node.match_tag -= 1
+                print(f"decrease tag 1: {node.hash_value}, value: {node.match_tag}")
 
             prefix_len = self.key_match_fn(node.key, key)
             total_prefix_length += prefix_len
