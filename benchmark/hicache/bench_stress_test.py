@@ -229,12 +229,16 @@ class ReadyQueue:
 class WorkloadGenerator:
     def process_stress_test_data(self):
         total_items = []
+        limit_item_num = 3213
         for i in range(271):
             with open('2108_dump_req_keys_' + str(i) + '.pkl', 'rb') as f:
                 self.stress_test_data = deque(pickle.load(f))
-                limit_item_num = 3213
-                for i in range(min(len(self.stress_test_data), limit_item_num)):
+                for i in range(len(self.stress_test_data)):
                     total_items.append(self.tokenizer.decode(self.stress_test_data[i]))
+                    if len(total_items) >= limit_item_num:
+                        break
+                if len(total_items) >= limit_item_num:
+                    break
                 print(f"current len of total_items: {len(total_items)}")
 
         with open('stress_test_prompt_list.pkl', 'wb') as f:
