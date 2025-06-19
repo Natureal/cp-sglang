@@ -623,6 +623,8 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         heap_by_pred = []
         for node in leaves:
+            if node.match_tag == 1:
+                print(f"leave match_tag = 1, hash_value = {node.hash_value}")
             heapq.heappush(heap_by_pred, (-node.pred + node.match_tag * 10000000, node))
             #heapq.heappush(heap_by_pred, (node.last_access_ts, node))
 
