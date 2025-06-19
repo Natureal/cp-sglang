@@ -359,7 +359,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             node = stack.pop()
             if node != self.root_node and not node.evicted:
                 all_nodes.append(node)
-                node.match_tag = 0
+                #node.match_tag = 0
 
             for child in node.children.values():
                 if not child.evicted:
@@ -623,8 +623,7 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         heap_by_pred = []
         for node in leaves:
-            #if node.match_tag == 1:
-            #    logger.info(f"leave match_tag = 1, hash_value = {node.hash_value}")
+            logger.info(f"leave match_tag = {node.match_tag}, hash_value = {node.hash_value}")
             heapq.heappush(heap_by_pred, (node.match_tag, -node.pred, node))
             #heapq.heappush(heap_by_pred, (-node.pred, node))
 
