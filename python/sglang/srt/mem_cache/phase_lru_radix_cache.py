@@ -635,7 +635,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             if x.lock_ref > 0:
                 continue
 
-            print(f"current ts = {self.current_ts}, evicted node pred = {x.pred}, hash_value = {x.hash_value}")
+            #print(f"current ts = {self.current_ts}, evicted node pred = {x.pred}, hash_value = {x.hash_value}")
 
             if self.token_to_kv_pool_allocator:
                 self.token_to_kv_pool_allocator.free(x.value)
