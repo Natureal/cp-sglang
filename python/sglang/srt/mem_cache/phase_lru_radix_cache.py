@@ -299,8 +299,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             if finished_req == True:
                 self._predictor_access(node, self.current_ts)
                 self._record_access(node, self.current_ts)
-                if node.hash_value == 5043749771647966909:
-                    print("decrease tag")
+                print(f"decrease tag: {node.hash_value}")
                 node.match_tag -= 1
 
             prefix_len = self.key_match_fn(node.key, key)
