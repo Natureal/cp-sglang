@@ -249,7 +249,7 @@ class PhaseLRURadixCache(BasePrefixCache):
                 new_node = self._split_node(node.hash_value, node, prefix_len)
                 if init_req == True:
                     new_node.match_tag += 1
-                    print(f"increase tag 2: {new_node.hash_value}, value: {new_node.match_tag}")
+                    #print(f"increase tag 2: {new_node.hash_value}, value: {new_node.match_tag}")
 
                 self._record_access(new_node, node.last_access_ts)
                 #self._judge_evicted_in_phase(node)
@@ -261,7 +261,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             else:
                 if init_req == True:
                     node.match_tag += 1
-                    print(f"increase tag 1: {node.hash_value}, value: {node.match_tag}")
+                    #print(f"increase tag 1: {node.hash_value}, value: {node.match_tag}")
 
                 value.append(node.value)
                 key = key[prefix_len:]
@@ -308,7 +308,7 @@ class PhaseLRURadixCache(BasePrefixCache):
                     self._predictor_access(new_node, self.current_ts)
                     self._record_access(new_node, self.current_ts)
                     new_node.match_tag -= 1
-                    print(f"decrease tag 1: {new_node.hash_value}, value: {new_node.match_tag}")
+                    #print(f"decrease tag 1: {new_node.hash_value}, value: {new_node.match_tag}")
                 # update ts for new_node
                 #self._judge_evicted_in_phase(node)
                 #self._judge_evicted_in_phase(new_node)
@@ -319,7 +319,7 @@ class PhaseLRURadixCache(BasePrefixCache):
                     self._predictor_access(node, self.current_ts)
                     self._record_access(node, self.current_ts)
                     node.match_tag -= 1
-                    print(f"decrease tag 1: {node.hash_value}, value: {node.match_tag}")
+                    #print(f"decrease tag 2: {node.hash_value}, value: {node.match_tag}")
 
             if len(key):
                 child_key = self.get_child_key_fn(key)
