@@ -961,7 +961,7 @@ if __name__ == "__main__":
                 prefix_hash = hash(tuple(req[:j + 1]))
                 NRT_truth[prefix_hash] = NRT[prefix_hash].popleft()
 
-        prefix, _ = tree.match_prefix(req)
+        prefix, _ = tree.match_prefix(req, init_req=True)
         total_hit_id_count += len(prefix)
         total_req_id_count += len(req)
         print(f"req_count = {req_count}, #req = {len(req)}, #prefix = {len(prefix)}, current_size = {current_size}")
