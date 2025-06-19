@@ -305,8 +305,6 @@ class PhaseLRURadixCache(BasePrefixCache):
             if prefix_len < len(node.key):
                 # originial_key is splitted into node.key and new_node.key
                 new_node = self._split_node(node.hash_value, node, prefix_len)
-                if finished_req == True:
-                    new_node.match_tag -= 1
                 # update ts for new_node
                 self._record_access(new_node, node.last_access_ts)
                 #self._judge_evicted_in_phase(node)
