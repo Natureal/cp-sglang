@@ -623,8 +623,8 @@ class PhaseLRURadixCache(BasePrefixCache):
         for node in leaves:
             #if node.match_tag == 1:
             #    logger.info(f"leave match_tag = 1, hash_value = {node.hash_value}")
-            #heapq.heappush(heap_by_pred, (-node.pred + node.match_tag * 10000000, node))
-            heapq.heappush(heap_by_pred, (-node.pred, node))
+            heapq.heappush(heap_by_pred, (-node.pred + node.match_tag * 10000000, node))
+            #heapq.heappush(heap_by_pred, (-node.pred, node))
 
         num_evicted = 0
         while num_evicted < num_tokens and len(heap_by_pred):
@@ -646,8 +646,8 @@ class PhaseLRURadixCache(BasePrefixCache):
 
             if len(x.parent.children) == 0 and x.parent != self.root_node and x.parent.lock_ref == 0:
                 self._predict([x.parent])
-                #heapq.heappush(heap_by_pred, (-x.parent.pred + x.parent.match_tag * 10000000, x.parent))
-                heapq.heappush(heap_by_pred, (-x.parent.pred, x.parent))
+                heapq.heappush(heap_by_pred, (-x.parent.pred + x.parent.match_tag * 10000000, x.parent))
+                #heapq.heappush(heap_by_pred, (-x.parent.pred, x.parent))
         
         return num_evicted
 
