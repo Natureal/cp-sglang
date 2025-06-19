@@ -68,7 +68,7 @@ def parse_args():
         "--distribution",
         type=str,
         default="poisson",
-        choices=["poisson", "uniform"],
+        choices=["poisson", "uniform", "equal"],
         help="Distribution type for request intervals (poisson or uniform)",
     )
     parser.add_argument(
