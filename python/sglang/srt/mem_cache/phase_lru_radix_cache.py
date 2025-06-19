@@ -908,12 +908,12 @@ if __name__ == "__main__":
     args = parse_args()
     tokenizer = get_tokenizer(args.model_path)
 
-    #tree = PhaseLRURadixCache(None, None, page_size=1, disable=False)
-    tree = GuardRadixCache(None, None, page_size=1, disable=False)
+    tree = PhaseLRURadixCache(None, None, page_size=1, disable=False)
+    #tree = GuardRadixCache(None, None, page_size=1, disable=False)
 
     #tree.set_algo_type("phaselru") #popu
     #tree.set_algo_type("lru")
-    #tree.set_algo_type("phaselru")
+    tree.set_algo_type("phaselru")
     #tree.set_algo_type("belady")
     #tree.set_algo_type("blindoracle")
 
