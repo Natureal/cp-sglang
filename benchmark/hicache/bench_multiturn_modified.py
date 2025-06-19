@@ -249,12 +249,12 @@ class WorkloadGenerator:
         self.synthetic_multiturn_requests = None
         self.load_local = True
 
-        self.local_poisson_multiturn_req_pkl = "synthetic_poisson_multiturn_512_requests.pkl"
+        self.local_multiturn_req_pkl = f"synthetic_{self.distribution}_multiturn_512_requests.pkl"
 
-        if self.load_local and os.path.exists(self.local_poisson_multiturn_req_pkl):
-            with open(self.local_poisson_multiturn_req_pkl, 'rb') as f:
+        if self.load_local and os.path.exists(self.local_multiturn_req_pkl):
+            with open(self.local_multiturn_req_pkl, 'rb') as f:
                 self.synthetic_multiturn_requests = deque(pickle.load(f))
-            print(f"load local file: {self.local_poisson_multiturn_req_pkl}")
+            print(f"load local file: {self.local_multiturn_req_pkl}")
 
         else:
             if self.load_local and os.path.exists("candidate_inputs.pkl"):
@@ -368,8 +368,10 @@ class WorkloadGenerator:
                     current_client_id = idx_to_client_id[idx]
                 #print(f"client_id: {current_client_id}, request_rate: {request_rate_map[current_client_id]}, corres idx: {idx}")
                 # Calculate Poisson-distributed wait time
-                if self.distribution == "poisson":
-                    sleep_time = 10 #random.expovariate(request_rate_map[current_client_id])
+                if self.distribution == "equal":
+                    sleep_time = 10
+                elif self.distribution == "poisson":
+                    sleep_time = random.expovariate(request_rate_map[current_client_id])
                 elif self.distribution == "uniform":
                     avg_interval = (
                         1.0 / request_rate_map[current_client_id] if request_rate_map[current_client_id]> 0 else 1.0
