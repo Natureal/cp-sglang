@@ -927,7 +927,7 @@ class ScheduleBatch(ScheduleBatchDisaggregationDecodeMixin):
     def alloc_token_slots(self, num_tokens: int, backup_state: bool = False):
         if self.token_to_kv_pool_allocator.available_size() < num_tokens:
             if self.tree_cache is not None:
-                self.tree_cache.evict(num_tokens) # - self.token_to_kv_pool_allocator.available_size())
+                self.tree_cache.evict(num_tokens - self.token_to_kv_pool_allocator.available_size())
 
         if backup_state:
             state = self.token_to_kv_pool_allocator.backup_state()
@@ -968,7 +968,7 @@ class ScheduleBatch(ScheduleBatchDisaggregationDecodeMixin):
                 self.tree_cache.evict(
                     extend_num_tokens
                     + len(seq_lens) * self.token_to_kv_pool_allocator.page_size
-                    #- self.token_to_kv_pool_allocator.available_size()
+                    - self.token_to_kv_pool_allocator.available_size()
                 )
 
         if backup_state:
@@ -1006,7 +1006,7 @@ class ScheduleBatch(ScheduleBatchDisaggregationDecodeMixin):
             ):
                 self.tree_cache.evict(
                     len(seq_lens) * self.token_to_kv_pool_allocator.page_size
-                    #- self.token_to_kv_pool_allocator.available_size()
+                    - self.token_to_kv_pool_allocator.available_size()
                 )
 
         if backup_state:
@@ -1331,7 +1331,7 @@ class ScheduleBatch(ScheduleBatchDisaggregationDecodeMixin):
         if self.token_to_kv_pool_allocator.available_size() >= tokens_required:
             return True
 
-        self.tree_cache.evict(tokens_required) # - self.token_to_kv_pool_allocator.available_size())
+        self.tree_cache.evict(tokens_required - self.token_to_kv_pool_allocator.available_size())
 
         return self.token_to_kv_pool_allocator.available_size() >= tokens_required
 
