@@ -145,7 +145,6 @@ class PhaseLRURadixCache(BasePrefixCache):
         # phase-level
         self.distinct_hash = set()
         self.distinct_item_count = 0
-        self.phase_cache_k = 1
         self.phase_err_param = 1
         self.pred_evicted = set()
         self.lru_evicted = set()
@@ -342,11 +341,9 @@ class PhaseLRURadixCache(BasePrefixCache):
         node.hash_value = hash(tuple(node.prefix_key + [node.key[0]]))
     
     def _start_new_phase(self):
-        logger.info(f"phase_cache_k = {self.phase_cache_k}, new phase_cache_k =  {TreeNode.counter - self.deleted_node_count}")
-        logger.info(f"start a new phase, current_node_count: {TreeNode.counter - self.deleted_node_count}")
+        logger.info(f"start a new phase, cache_size_k = {self.cache_size_k}, current_node_count: {TreeNode.counter - self.deleted_node_count}")
         print(f"start a new phase, current_node_count: {TreeNode.counter - self.deleted_node_count}")
 
-        #self.phase_cache_k = TreeNode.counter - self.deleted_node_count
         self.distinct_hash.clear()
         self.distinct_item_count = 0
         self.pred_evicted.clear()
@@ -769,7 +766,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             self.distinct_hash.add(node.hash_value)
             self.distinct_item_count += len(node.key)
 
-        if self.distinct_item_count >= self.phase_cache_k:
+        if self.distinct_item_count >= self.cache_size_k:
             self._start_new_phase()
 
         node.access_times += 1
@@ -943,7 +940,7 @@ if __name__ == "__main__":
     #total_size = 30700 # 2%
     #total_size = 15360 # 1%
     
-    tree.phase_cache_k = total_size
+    tree.cache_size_k = total_size
     req_count = 0
     current_size = 0
     total_hit_id_count = 0
