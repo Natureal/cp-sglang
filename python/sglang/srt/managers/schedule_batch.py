@@ -637,7 +637,7 @@ class Req:
                 )
             else:
                 self.prefix_indices, self.last_node = tree_cache.match_prefix(
-                    rid=self.rid, key=self.adjust_max_prefix_ids()
+                    rid=self.rid, key=self.adjust_max_prefix_ids(), init_req=True
                 )
         elif enable_hierarchical_cache:
             # in case last_node is evicted during scheduling, we need to update the prefix_indices
