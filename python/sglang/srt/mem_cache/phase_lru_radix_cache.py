@@ -242,17 +242,12 @@ class PhaseLRURadixCache(BasePrefixCache):
         value = []
         while len(key) > 0 and child_key in node.children.keys():
             node = node.children[child_key]
-            if init_req == True:
-                #if node.hash_value == 5043749771647966909:
-                node.match_tag += 1
-                print(f"increase tag 1: {node.hash_value}, value: {node.match_tag}")
 
             prefix_len = self.key_match_fn(node.key, key)
             if prefix_len < len(node.key):
                 # originial_key is splitted into node.key and new_node.key
                 new_node = self._split_node(node.hash_value, node, prefix_len)
                 if init_req == True:
-                    #if node.hash_value == 5043749771647966909:
                     new_node.match_tag += 1
                     print(f"increase tag 2: {new_node.hash_value}, value: {new_node.match_tag}")
 
@@ -264,6 +259,10 @@ class PhaseLRURadixCache(BasePrefixCache):
                 node = new_node
                 break
             else:
+                if init_req == True:
+                    node.match_tag += 1
+                    print(f"increase tag 1: {node.hash_value}, value: {node.match_tag}")
+
                 value.append(node.value)
                 key = key[prefix_len:]
 
@@ -296,11 +295,6 @@ class PhaseLRURadixCache(BasePrefixCache):
         total_prefix_length = 0
         while len(key) > 0 and child_key in node.children.keys():
             node = node.children[child_key]
-            if finished_req == True:
-                self._predictor_access(node, self.current_ts)
-                self._record_access(node, self.current_ts)
-                node.match_tag -= 1
-                print(f"decrease tag 1: {node.hash_value}, value: {node.match_tag}")
 
             prefix_len = self.key_match_fn(node.key, key)
             total_prefix_length += prefix_len
@@ -310,12 +304,22 @@ class PhaseLRURadixCache(BasePrefixCache):
             if prefix_len < len(node.key):
                 # originial_key is splitted into node.key and new_node.key
                 new_node = self._split_node(node.hash_value, node, prefix_len)
+                if finished_req == True:
+                    self._predictor_access(new_node, self.current_ts)
+                    self._record_access(new_node, self.current_ts)
+                    new_node.match_tag -= 1
+                    print(f"decrease tag 1: {new_node.hash_value}, value: {new_node.match_tag}")
                 # update ts for new_node
-                self._record_access(new_node, node.last_access_ts)
                 #self._judge_evicted_in_phase(node)
                 #self._judge_evicted_in_phase(new_node)
 
                 node = new_node
+            else:
+                if finished_req == True:
+                    self._predictor_access(node, self.current_ts)
+                    self._record_access(node, self.current_ts)
+                    node.match_tag -= 1
+                    print(f"decrease tag 1: {node.hash_value}, value: {node.match_tag}")
 
             if len(key):
                 child_key = self.get_child_key_fn(key)
@@ -748,6 +752,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         new_node.lock_ref = child.lock_ref
         new_node.key = child.key[:split_len]
         new_node.prefix_key = child.prefix_key # added
+        new_node.match_tag = child.match_tag
         self._generate_node_hash_value(new_node)
         new_node.value = child.value[:split_len]
         new_node.parent.children[self.get_child_key_fn(new_node.key)] = new_node
