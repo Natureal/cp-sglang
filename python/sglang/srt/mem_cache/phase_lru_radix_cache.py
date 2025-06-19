@@ -203,7 +203,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             return
         self._start_new_phase()
 
-    def match_prefix(self, key: List[int], **kwargs) -> Tuple[torch.Tensor, int]:
+    def match_prefix(self, key: List[int], init_req=False, **kwargs) -> Tuple[torch.Tensor, int]:
         """Find the matching prefix from the radix tree.
         Args:
             key: A list of token IDs to find a matching prefix.
@@ -228,7 +228,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             page_aligned_len = len(key) // self.page_size * self.page_size
             key = key[:page_aligned_len]
 
-        value, last_node = self._match_prefix_helper(self.root_node, key)
+        value, last_node = self._match_prefix_helper(self.root_node, key, init_req)
         if value:
             value = torch.cat(value)
         else:
@@ -236,19 +236,21 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         return value, last_node
     
-    def _match_prefix_helper(self, node: TreeNode, key: List):
+    def _match_prefix_helper(self, node: TreeNode, key: List, init_req):
         child_key = self.get_child_key_fn(key)
 
         value = []
         while len(key) > 0 and child_key in node.children.keys():
             node = node.children[child_key]
-            node.match_tag = 1
+            if init_req == True:
+                node.match_tag += 1
 
             prefix_len = self.key_match_fn(node.key, key)
             if prefix_len < len(node.key):
                 # originial_key is splitted into node.key and new_node.key
                 new_node = self._split_node(node.hash_value, node, prefix_len)
-                new_node.match_tag = 1
+                if init_req == True:
+                    new_node.match_tag += 1
 
                 self._record_access(new_node, node.last_access_ts)
                 #self._judge_evicted_in_phase(node)
@@ -290,11 +292,10 @@ class PhaseLRURadixCache(BasePrefixCache):
         total_prefix_length = 0
         while len(key) > 0 and child_key in node.children.keys():
             node = node.children[child_key]
-            node.match_tag = 0
-            
             if finished_req == True:
                 self._predictor_access(node, self.current_ts)
                 self._record_access(node, self.current_ts)
+                node.match_tag -= 1
 
             prefix_len = self.key_match_fn(node.key, key)
             total_prefix_length += prefix_len
@@ -304,7 +305,8 @@ class PhaseLRURadixCache(BasePrefixCache):
             if prefix_len < len(node.key):
                 # originial_key is splitted into node.key and new_node.key
                 new_node = self._split_node(node.hash_value, node, prefix_len)
-                new_node.match_tag = 0
+                if finished_req == True:
+                    new_node.match_tag -= 1
                 # update ts for new_node
                 self._record_access(new_node, node.last_access_ts)
                 #self._judge_evicted_in_phase(node)
@@ -623,7 +625,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         for node in leaves:
             #if node.match_tag == 1:
             #    logger.info(f"leave match_tag = 1, hash_value = {node.hash_value}")
-            heapq.heappush(heap_by_pred, (-node.pred + node.match_tag * 10000000, node))
+            heapq.heappush(heap_by_pred, (node.match_tag, -node.pred, node))
             #heapq.heappush(heap_by_pred, (-node.pred, node))
 
         num_evicted = 0
@@ -635,7 +637,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             if x.lock_ref > 0:
                 continue
 
-            #print(f"current ts = {self.current_ts}, evicted node pred = {x.pred}, hash_value = {x.hash_value}")
+            print(f"current ts = {self.current_ts}, evicted match_tag = {x.match_tag}, pred = {x.pred}, hash_value = {x.hash_value}")
 
             if self.token_to_kv_pool_allocator:
                 self.token_to_kv_pool_allocator.free(x.value)
@@ -646,7 +648,7 @@ class PhaseLRURadixCache(BasePrefixCache):
 
             if len(x.parent.children) == 0 and x.parent != self.root_node and x.parent.lock_ref == 0:
                 self._predict([x.parent])
-                heapq.heappush(heap_by_pred, (-x.parent.pred + x.parent.match_tag * 10000000, x.parent))
+                heapq.heappush(heap_by_pred, (x.parent.match_tag, -x.parent.pred, x.parent))
                 #heapq.heappush(heap_by_pred, (-x.parent.pred, x.parent))
         
         return num_evicted

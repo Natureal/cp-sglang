@@ -72,6 +72,12 @@ def parse_args():
         help="Distribution type for request intervals (poisson or uniform)",
     )
     parser.add_argument(
+        "--sync",
+        type=str,
+        default="off",
+        help="Send requests synchronously",
+    )
+    parser.add_argument(
         "--request-rate",
         type=float,
         default=1.0,
@@ -325,7 +331,7 @@ class WorkloadGenerator:
                     new_request = self.synthetic_multiturn_requests.popleft()
                     asyncio.create_task(self.handle_request(new_request))
                     self.sent_requests += 1
-                    await asyncio.sleep(0.2)
+                    await asyncio.sleep(0.5)
                 else:
                     await asyncio.sleep(0.05)
                     continue
