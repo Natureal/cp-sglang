@@ -629,7 +629,7 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         num_evicted = 0
         while num_evicted < num_tokens and len(heap_by_pred):
-            _, x = heapq.heappop(heap_by_pred)      
+            _, _, x = heapq.heappop(heap_by_pred)      
 
             if x == self.root_node:
                 break
