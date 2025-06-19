@@ -181,6 +181,7 @@ class TokenToKVPoolAllocator:
         self.device = device
         self.page_size = 1
 
+        self.evicted_num = 0
         self.evictable_size = 0
 
         self.free_slots = None
