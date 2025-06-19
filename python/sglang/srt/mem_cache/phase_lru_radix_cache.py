@@ -357,6 +357,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             node = stack.pop()
             if node != self.root_node and not node.evicted:
                 all_nodes.append(node)
+                node.match_tag = 0
 
             for child in node.children.values():
                 if not child.evicted:
