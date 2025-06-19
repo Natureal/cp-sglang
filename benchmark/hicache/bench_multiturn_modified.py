@@ -250,14 +250,18 @@ class WorkloadGenerator:
         self.load_local = False
 
         if self.load_local and os.path.exists("synthetic_multiturn_256_requests.pkl"):
-             with open('synthetic_multiturn_256_requests.pkl', 'rb') as f:
+            with open('synthetic_multiturn_256_requests.pkl', 'rb') as f:
                 self.synthetic_multiturn_requests = deque(pickle.load(f))
+            print(f"load local file: synthetic_multiturn_256_requests.pkl")
+
         else:
             if self.load_local and os.path.exists("candidate_inputs.pkl"):
                 with open('candidate_inputs.pkl', 'rb') as f:
                     self.candidate_inputs = pickle.load(f)
+                print(f"load local file: candidate_inputs.pkl")
 
             else:
+                print(f"sample from dataset")
                 self.raw_candidate_inputs = sample_random_requests(
                     input_len=args.request_length,
                     output_len=args.output_length,
