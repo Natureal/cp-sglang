@@ -243,6 +243,8 @@ class PhaseLRURadixCache(BasePrefixCache):
         while len(key) > 0 and child_key in node.children.keys():
             node = node.children[child_key]
             if init_req == True:
+                if node.hash_value == 5043749771647966909:
+                    print("instease tag")
                 node.match_tag += 1
 
             prefix_len = self.key_match_fn(node.key, key)
@@ -250,6 +252,8 @@ class PhaseLRURadixCache(BasePrefixCache):
                 # originial_key is splitted into node.key and new_node.key
                 new_node = self._split_node(node.hash_value, node, prefix_len)
                 if init_req == True:
+                    if node.hash_value == 5043749771647966909:
+                        print("instease tag")
                     new_node.match_tag += 1
 
                 self._record_access(new_node, node.last_access_ts)
@@ -295,6 +299,8 @@ class PhaseLRURadixCache(BasePrefixCache):
             if finished_req == True:
                 self._predictor_access(node, self.current_ts)
                 self._record_access(node, self.current_ts)
+                if node.hash_value == 5043749771647966909:
+                    print("decrease tag")
                 node.match_tag -= 1
 
             prefix_len = self.key_match_fn(node.key, key)
