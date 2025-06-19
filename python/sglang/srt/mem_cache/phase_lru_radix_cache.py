@@ -72,6 +72,7 @@ class TreeNode:
         self.pred = 0
         self.pred_valid = 0
         self.access_times = 0
+        self.match_tag = 0
 
         self.prefix_key = None
         self.hash_value = None
@@ -242,10 +243,14 @@ class PhaseLRURadixCache(BasePrefixCache):
         value = []
         while len(key) > 0 and child_key in node.children.keys():
             node = node.children[child_key]
+            node.match_tag = 1
+
             prefix_len = self.key_match_fn(node.key, key)
             if prefix_len < len(node.key):
                 # originial_key is splitted into node.key and new_node.key
                 new_node = self._split_node(node.hash_value, node, prefix_len)
+                new_node.match_tag = 1
+
                 self._record_access(new_node, node.last_access_ts)
                 #self._judge_evicted_in_phase(node)
                 #self._judge_evicted_in_phase(new_node)
@@ -286,6 +291,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         total_prefix_length = 0
         while len(key) > 0 and child_key in node.children.keys():
             node = node.children[child_key]
+            node.match_tag = 0
             
             if finished_req == True:
                 self._predictor_access(node, self.current_ts)
@@ -299,6 +305,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             if prefix_len < len(node.key):
                 # originial_key is splitted into node.key and new_node.key
                 new_node = self._split_node(node.hash_value, node, prefix_len)
+                new_node.match_tag = 0
                 # update ts for new_node
                 self._record_access(new_node, node.last_access_ts)
                 #self._judge_evicted_in_phase(node)
@@ -616,7 +623,7 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         heap_by_pred = []
         for node in leaves:
-            heapq.heappush(heap_by_pred, (-node.pred, node))
+            heapq.heappush(heap_by_pred, (-node.pred + node.match_tag * 10000000, node))
             #heapq.heappush(heap_by_pred, (node.last_access_ts, node))
 
         num_evicted = 0
@@ -639,7 +646,7 @@ class PhaseLRURadixCache(BasePrefixCache):
 
             if len(x.parent.children) == 0 and x.parent != self.root_node and x.parent.lock_ref == 0:
                 self._predict([x.parent])
-                heapq.heappush(heap_by_pred, (-x.parent.pred, x.parent))
+                heapq.heappush(heap_by_pred, (-x.parent.pred + x.parent.match_tag * 10000000, x.parent))
                 #heapq.heappush(heap_by_pred, (x.parent.last_access_ts, x.parent))
         
         return num_evicted
