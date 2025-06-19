@@ -253,7 +253,7 @@ class PhaseLRURadixCache(BasePrefixCache):
                 new_node = self._split_node(node.hash_value, node, prefix_len)
                 if init_req == True:
                     #if node.hash_value == 5043749771647966909:
-                    print(f"instease tag 2: {node.hash_value}")
+                    print(f"instease tag 2: {new_node.hash_value}")
                     new_node.match_tag += 1
 
                 self._record_access(new_node, node.last_access_ts)
