@@ -246,6 +246,8 @@ class PhaseLRURadixCache(BasePrefixCache):
                 #if node.hash_value == 5043749771647966909:
                 print(f"increase tag 1: {node.hash_value}")
                 node.match_tag += 1
+                if node.match_tag == 2:
+                    print(f"crazy, hash = {node.hash_value}")
 
             prefix_len = self.key_match_fn(node.key, key)
             if prefix_len < len(node.key):
