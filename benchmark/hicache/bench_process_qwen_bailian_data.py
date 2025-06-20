@@ -16,7 +16,7 @@ if __name__ == "__main__":
                     session[chat_id].append(item)
 
     print(f"session len: {len(session)}")
-    for chat in session:
+    for chat_id, item in session.items():
         print(f" ------------- one session starts --------------- ")
-        for req in chat:
+        for req in item:
             print(f"req: {str(req)}")
