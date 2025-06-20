@@ -825,7 +825,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             print(
                 "--" * current_indent,
                 #f"node_id ({current_node.id}), depth ({current_indent / 2}), #keys {len(current_node.key)}",
-                f"node_id ({current_node.id}), access_t {current_node.last_access_ts}, pred {current_node.pred}, #keys {len(current_node.key)}",
+                f"node_id ({current_node.id}), times {current_node.access_times}, pred {current_node.pred}, #keys {len(current_node.key)}",
                 #current_node.key[:10],
                 #f"r={current_node.lock_ref}",
             )
