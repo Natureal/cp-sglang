@@ -6,7 +6,6 @@ import json
 if __name__ == "__main__":
     chat_dict = {}
     parent = {}
-    session = {}
     with open('qwen_traceA_blksz_16.jsonl', 'r', encoding='utf-8') as f:
         for line in f:
             if line.strip():  # 跳过空行
@@ -14,11 +13,6 @@ if __name__ == "__main__":
                 chat_id = item['chat_id']
                 chat_dict[chat_id] = item
                 parent_chat_id = item['parent_chat_id']
-                if parent_chat_id == -1:
-                    if chat_id not in session:
-                        session[chat_id] = [item]
-                    else:
-                        print(f"error happened, chat id replicates {chat_id}")
 
     link_count = 0
     for chat_id, item in chat_dict.items():
@@ -30,8 +24,10 @@ if __name__ == "__main__":
 
     print(f"link count = {link_count}")
 
-    print(f"session len: {len(session)}")
-    for chat_id, item in session.items():
+    print(f"chat_dict len: {len(chat_dict)}")
+    for chat_id, item in chat_dict.items():
+        if item['parent_chat_id'] != -1:
+            continue
         print(f" ------------- one session starts --------------- ")
         while True:
             print(f"req: {str(item)}")
