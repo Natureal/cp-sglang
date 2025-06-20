@@ -634,7 +634,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         heap_by_pred = []
         for node in leaves:
             logger.info(f"leave match_tag = {node.match_tag}, hash_value = {node.hash_value}")
-            print(f"leave match_tag = {node.match_tag}, hash_value = {node.hash_value}")
+            #print(f"leave match_tag = {node.match_tag}, hash_value = {node.hash_value}")
             heapq.heappush(heap_by_pred, (node.match_tag, -node.pred, node))
             #heapq.heappush(heap_by_pred, (0, -node.pred, node))
 
