@@ -17,6 +17,6 @@ if __name__ == "__main__":
 
     print(f"session len: {len(session)}")
     for chat_id, item in session.items():
-        print(f" ------------- one session starts --------------- ")
+        print(f" ------------- one session starts, num of reqs: {len(item)} --------------- ")
         for req in item:
             print(f"req: {str(req)}")
