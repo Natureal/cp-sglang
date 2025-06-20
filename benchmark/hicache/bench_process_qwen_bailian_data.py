@@ -20,10 +20,14 @@ if __name__ == "__main__":
                     else:
                         print(f"error happened, chat id replicates {chat_id}")
 
+    link_count = 0
     for chat_id, item in chat_dict.items():
         parent_chat_id = item['parent_chat_id']
         if parent_chat_id != -1:
+            link_count += 1
             chat_dict[parent_chat_id]['child_id'] = chat_id
+
+    print(f"link count = {link_count}")
 
     print(f"session len: {len(session)}")
     for chat_id, item in session.items():
