@@ -26,7 +26,7 @@ if __name__ == "__main__":
         if parent_chat_id != -1:
             link_count += 1
             chat_dict[parent_chat_id]['child_id'] = chat_id
-            print(f"parent_id = {parent_chat_id}")
+            print(f"link, from {parent_chat_id} to {chat_id}")
 
     print(f"link count = {link_count}")
 
