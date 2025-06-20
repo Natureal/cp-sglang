@@ -31,6 +31,7 @@ import io
 import os
 import logging
 import math
+import json
 from collections import defaultdict, deque
 from functools import partial
 from typing import TYPE_CHECKING, List, Optional, Tuple, Set
@@ -901,6 +902,18 @@ def load_poisson_multiturn_data(tokenizer):
         print(f"file not found")
     return ret
 
+def load_qwen_bailian_data():
+    ret = []
+    if os.path.exists("qwen_traceA_blksz_16.jsonl"):
+        with open('qwen_traceA_blksz_16.jsonl', 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.strip():  # skip empty line
+                    item = json.loads(line)
+                    ret.append(item['hash_ids'])
+    else:
+        print(f"file not found")
+    return ret
+
 def load_stress_test_data(tokenizer):
     ret = []
     if os.path.exists("stress_test_token_id.pkl"):
@@ -929,10 +942,15 @@ if __name__ == "__main__":
 
     #sync_send_req_set = load_multiturn_data(tokenizer)
     #data_type = "multiturn"
+    
     #sync_send_req_set = load_stress_test_data(tokenizer)
     #data_type = "stress"
-    sync_send_req_set = load_poisson_multiturn_data(tokenizer)
-    data_type = "poisson_multiturn"
+    
+    #sync_send_req_set = load_poisson_multiturn_data(tokenizer)
+    #data_type = "poisson_multiturn"
+
+    sync_send_req_set = load_qwen_bailian_data()
+    data_type = "qwen_bailian"
 
     if tree.algo_type == "belady":
         current_ts = 0
