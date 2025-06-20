@@ -26,12 +26,15 @@ if __name__ == "__main__":
 
     print(f"chat_dict len: {len(chat_dict)}")
     for chat_id, item in chat_dict.items():
+        req_count = 0
         if item['parent_chat_id'] != -1:
             continue
         print(f" ------------- one session starts --------------- ")
         while True:
+            req_count += 1
             print(f"req: {str(item)}")
             if 'child_id' in item:
                 item = chat_dict[item['child_id']]
             else:
                 break
+        print(f" ------------- one session ends, req count = {req_count} --------------- ")
