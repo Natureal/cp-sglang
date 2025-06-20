@@ -757,7 +757,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         new_node.prefix_key = child.prefix_key # added
         new_node.match_tag = child.match_tag
         self._generate_node_hash_value(new_node)
-        print(f"original hash v = {hash_value}, new_node hash v = {new_node.hash_value}")
+        #print(f"original hash v = {hash_value}, new_node hash v = {new_node.hash_value}")
         new_node.value = child.value[:split_len]
         new_node.parent.children[self.get_child_key_fn(new_node.key)] = new_node
 
@@ -800,7 +800,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             return
         self._predictor_feature_copy(original_hash, node.hash_value)
         self._predictor_feature_copy(original_hash, new_node.hash_value)
-        self.predictor.feature_delete(original_hash)
+        #self.predictor.feature_delete(original_hash)
         # copy pred from original node
         new_node.pred_valid = node.pred_valid
         new_node.pred = node.pred
