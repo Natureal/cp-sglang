@@ -21,6 +21,8 @@ The radix tree data structure for managing the KV cache.
 
 import numpy as np
 import argparse
+import json
+from types import SimpleNamespace
 import torch
 import heapq
 import random
@@ -940,7 +942,8 @@ if __name__ == "__main__":
     #tree.set_algo_type("belady")
     #tree.set_algo_type("blindoracle")
 
-    obj = {'enable_online_training': 'on'}
+    json_str = '{"enable_online_training": "on"}'
+    obj = json.loads(json_str, object_hook=lambda d: SimpleNamespace(**d))
     tree.set_online_training(obj)
 
     #sync_send_req_set = load_multiturn_data(tokenizer)
