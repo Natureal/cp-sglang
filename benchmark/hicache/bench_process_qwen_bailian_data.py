@@ -12,4 +12,4 @@ if __name__ == "__main__":
 
     print(f"line1 = {str(data_list[0])}")
     print(f"line2 = {str(data_list[1])}")
-    print(f"line3 = {str(data_list[1])}")
+    print(f"line3 = {str(data_list[2])}")
