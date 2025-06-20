@@ -940,6 +940,9 @@ if __name__ == "__main__":
     #tree.set_algo_type("belady")
     #tree.set_algo_type("blindoracle")
 
+    obj = {'enable_online_training': 'on'}
+    tree.set_online_training(obj)
+
     #sync_send_req_set = load_multiturn_data(tokenizer)
     #data_type = "multiturn"
     

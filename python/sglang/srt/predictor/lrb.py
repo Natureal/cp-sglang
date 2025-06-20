@@ -42,7 +42,7 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
 
         # online training
         self.training_config = model_config['training']
-        self.training_interval = 10000
+        self.training_interval = 2000
         self.training_accumu_num = 0
         self.training_window = 100000
         self.existing_online_training = 0
@@ -87,6 +87,7 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
         model.save_model(self._model_save_path, num_iteration=model.best_iteration)
         end = time.time()
         logger.info(f"training time cost = {end - start}, #features = {len(self.features)}, interval = {self.training_interval}")
+        print(f"training time cost = {end - start}, #features = {len(self.features)}, interval = {self.training_interval}")
         
         self._model = LightGBMModel.from_config(self.delta_nums, self.edc_nums, self._model_save_path)
         self.existing_online_training = 0
@@ -123,6 +124,7 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
             self.features.append((*self.feature_history[address], current_ts - last_access_time))
             if len(self.features) % 1000 == 0:
                 logger.info(f"current #features: {len(self.features)}")
+                print(f"current #features: {len(self.features)}")
             #logger.info(f"features: {str((*self.feature_history[address], current_ts - last_access_time))}")
             if len(self.features) > self.training_window:
                 self.features.popleft()
