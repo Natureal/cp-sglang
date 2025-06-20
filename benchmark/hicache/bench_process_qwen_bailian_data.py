@@ -8,11 +8,12 @@ if __name__ == "__main__":
     with open('qwen_traceA_blksz_16.jsonl', 'r', encoding='utf-8') as f:
         for line in f:
             if line.strip():  # 跳过空行
-                chat_id = json.loads(line)['chat_id']
+                item = json.loads(line)
+                chat_id = item['chat_id']
                 if chat_id not in session:
-                    session[chat_id] = [line]
+                    session[chat_id] = [item]
                 else:
-                    session[chat_id].append(line)
+                    session[chat_id].append(item)
 
     print(f"session len: {len(session)}")
     for chat in session:
