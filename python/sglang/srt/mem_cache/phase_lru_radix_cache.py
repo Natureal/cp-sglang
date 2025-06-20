@@ -588,9 +588,9 @@ class PhaseLRURadixCache(BasePrefixCache):
                     node.pred = node.last_access_ts + preds[i]
                 node.pred_valid = 1
 
-        #for i in range(len(node_to_pred)):
-        #    node = node_to_pred[i]
-        #    print(f"node key hash = {hash(tuple(node.key))}, hash_value = {node.hash_value}, pred = {node.pred}, truth = {NRT[node.hash_value][0] if len(NRT[node.hash_value]) > 0 else 10000000}")
+        for i in range(len(node_to_pred)):
+            node = node_to_pred[i]
+            print(f"node key hash = {hash(tuple(node.key))}, hash_value = {node.hash_value}, pred = {node.pred}, truth = {NRT[node.hash_value][0] if len(NRT[node.hash_value]) > 0 else 10000000}")
 
     def _evict_by_lru(self, num_tokens: int, based_on_budget: bool):
         leaves = self._collect_leaves()
@@ -939,8 +939,8 @@ if __name__ == "__main__":
 
     #tree.set_algo_type("phaselru") #popu
     #tree.set_algo_type("lru")
-    #tree.set_algo_type("phaselru")
-    tree.set_algo_type("belady")
+    tree.set_algo_type("phaselru")
+    #tree.set_algo_type("belady")
     #tree.set_algo_type("blindoracle")
 
     json_str = '{"enable_online_training": "on", "training_interval": 10000, "training_window": 100000}'
@@ -959,15 +959,15 @@ if __name__ == "__main__":
     sync_send_req_set = load_qwen_bailian_data()
     data_type = "qwen_bailian"
 
-    if tree.algo_type == "belady":
-        current_ts = 0
-        for req in sync_send_req_set:
-            current_ts += 1
-            for j in range(len(req)):
-                prefix_hash = hash(tuple(req[:j + 1]))
-                if prefix_hash not in NRT:
-                    NRT[prefix_hash] = deque()
-                NRT[prefix_hash].append(current_ts)
+    #if tree.algo_type == "belady":
+    current_ts = 0
+    for req in sync_send_req_set:
+        current_ts += 1
+        for j in range(len(req)):
+            prefix_hash = hash(tuple(req[:j + 1]))
+            if prefix_hash not in NRT:
+                NRT[prefix_hash] = deque()
+            NRT[prefix_hash].append(current_ts)
 
     #hash = -4232634994979945749
     #print(f"debug: {NRT[hash]}")
@@ -990,10 +990,11 @@ if __name__ == "__main__":
             print(f"evicted {len(req)}")
 
         # start access
-        if tree.algo_type == "belady":
-            for j in range(len(req)):
-                prefix_hash = hash(tuple(req[:j + 1]))
-                NRT_truth[prefix_hash] = NRT[prefix_hash].popleft()
+        #if tree.algo_type == "belady":
+        for j in range(len(req)):
+            prefix_hash = hash(tuple(req[:j + 1]))
+            #NRT_truth[prefix_hash] = NRT[prefix_hash].popleft()
+            NRT[prefix_hash].popleft()
 
         prefix, _ = tree.match_prefix(req, init_req=True)
         total_hit_id_count += len(prefix)
