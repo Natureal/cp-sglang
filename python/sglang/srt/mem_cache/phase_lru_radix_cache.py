@@ -773,8 +773,10 @@ class PhaseLRURadixCache(BasePrefixCache):
         return new_node
     
     def _record_access(self, node: TreeNode, new_ts):
+        node.access_times += 1
+        node.last_access_ts = new_ts
+
         if self.degrade_to_lru == True or self.waiting_queue_cache == True:
-            node.last_access_ts = new_ts
             return
 
         if node.hash_value not in self.distinct_hash:
@@ -784,9 +786,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         if self.distinct_item_count >= self.cache_size_k:
             self._start_new_phase()
 
-        node.access_times += 1
         self.U.discard(node)
-        node.last_access_ts = new_ts
     
     def _predictor_access(self, node: TreeNode, current_ts):
         if self.degrade_to_lru == True or self.waiting_queue_cache == True:
