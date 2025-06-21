@@ -173,6 +173,8 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
         # ------------------- update features ends ----------------------------
 
     def get_features(self, address, current_ts):
+        if address not in self.access_time_dict:
+            print(f"error - address = {address}")
         last_access_time = self.access_time_dict[address][-1]
         return (*self.feature_history[address], current_ts - last_access_time)
 
