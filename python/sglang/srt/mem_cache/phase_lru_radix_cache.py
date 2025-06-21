@@ -818,11 +818,13 @@ class PhaseLRURadixCache(BasePrefixCache):
     def _predictor_spawn(self, node: TreeNode, new_node: TreeNode):
         if self.degrade_to_lru == True or self.waiting_queue_cache == True:
             return
+        
+        return
+
         self._predictor_feature_copy(node.hash_value, new_node.hash_value)
         # copy pred from parent node
         new_node.pred_valid = node.pred_valid
         new_node.pred = node.pred
-       # pass
 
     def _print_helper(self, node: TreeNode, indent: int):
         """Prints the radix tree in a human-readable format."""
