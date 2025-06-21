@@ -945,7 +945,7 @@ if __name__ == "__main__":
 
     json_str = '{"enable_online_training": "on", "training_interval": 5000, "training_window": 100000}'
     obj = json.loads(json_str, object_hook=lambda d: SimpleNamespace(**d))
-    tree.set_online_training(obj)
+    #tree.set_online_training(obj)
 
     #sync_send_req_set = load_multiturn_data(tokenizer)
     #data_type = "multiturn"
