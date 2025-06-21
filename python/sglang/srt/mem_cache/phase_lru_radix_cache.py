@@ -652,7 +652,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             if x.lock_ref > 0:
                 continue
 
-            print(f"current ts = {self.current_ts}, len of key = {len(x.key)}, pred = {x.pred}, truth = {NRT[node.hash_value][0] if len(NRT[node.hash_value]) > 0 else 10000000}, features = {self.predictor.get_features(node.hash_value, self.current_ts)}")
+            print(f"current ts = {self.current_ts}, len of key = {len(x.key)}, hash = {node.hash_value}, pred = {x.pred}, truth = {NRT[node.hash_value][0] if len(NRT[node.hash_value]) > 0 else 10000000}, features = {self.predictor.get_features(node.hash_value, self.current_ts)}")
 
             if self.token_to_kv_pool_allocator:
                 self.token_to_kv_pool_allocator.free(x.value)
