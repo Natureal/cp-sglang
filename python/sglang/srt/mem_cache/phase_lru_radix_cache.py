@@ -954,10 +954,10 @@ if __name__ == "__main__":
     #tree = GuardRadixCache(None, None, page_size=1, disable=False)
 
     #tree.set_algo_type("phaselru") #popu
-    #tree.set_algo_type("lru")
+    tree.set_algo_type("lru")
     #tree.set_algo_type("phaselru")
     #tree.set_algo_type("belady")
-    tree.set_algo_type("blindoracle")
+    #tree.set_algo_type("blindoracle")
 
     json_str = '{"enable_online_training": "on", "training_interval": 5000, "training_window": 100000}'
     obj = json.loads(json_str, object_hook=lambda d: SimpleNamespace(**d))
