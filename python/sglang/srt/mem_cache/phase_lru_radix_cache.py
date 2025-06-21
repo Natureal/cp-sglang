@@ -988,9 +988,9 @@ if __name__ == "__main__":
     #hash = -4232634994979945749
     #print(f"debug: {NRT[hash]}")
 
-    total_size = 153600
+    #total_size = 153600
     #total_size = 76800 # 5%
-    #total_size = 30700 # 2%
+    total_size = 30700 # 2%
     #total_size = 15360 # 1%
     
     tree.cache_size_k = total_size
