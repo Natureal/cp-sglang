@@ -110,6 +110,8 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
             self.feature_history.pop(address, None)
 
     def feature_copy(self, address, new_address):
+        if address == new_address:
+            return
         # copy features from original address
         if address in self.access_time_dict:
             self.access_time_dict[new_address] = copy.deepcopy(self.access_time_dict[address])

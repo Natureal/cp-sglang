@@ -339,6 +339,7 @@ class PhaseLRURadixCache(BasePrefixCache):
                 new_node.prefix_key = node.key
             new_node.key_path_len = len(new_node.prefix_key) + len(new_node.key)
             self._generate_node_hash_value(new_node)
+            print(f"insert new_node hash v = {new_node.hash_value}")
             new_node.value = value
 
             self._predictor_spawn(node, new_node)
@@ -766,7 +767,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         new_node.key_path_len = len(new_node.prefix_key) + len(new_node.key)
         new_node.match_tag = child.match_tag
         self._generate_node_hash_value(new_node)
-        #print(f"original hash v = {hash_value}, new_node hash v = {new_node.hash_value}")
+        print(f"splot new_node hash v = {new_node.hash_value}")
         new_node.value = child.value[:split_len]
         new_node.parent.children[self.get_child_key_fn(new_node.key)] = new_node
 
