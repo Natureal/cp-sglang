@@ -174,7 +174,7 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
 
     def get_features(self, address, current_ts):
         last_access_time = self.access_time_dict[address][-1]
-        return (*self.feature_history[address], current_ts - last_access_time, current_ts - last_access_time)
+        return (*self.feature_history[address], current_ts - last_access_time)
 
     def predict(self, addresses, key_path_lens, current_ts):
         results = []
