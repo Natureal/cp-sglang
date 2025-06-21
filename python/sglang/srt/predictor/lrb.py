@@ -61,8 +61,8 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
         for address in self.feature_history:
             last_access_time = self.access_time_dict[address][-1]
             self.tmp_features.append((*self.feature_history[address], self.current_ts - last_access_time, 100000000))
-        #for feature in self.tmp_features:
-        #    print(f"feature used for training: {str(feature)}")
+        for feature in self.tmp_features:
+            print(f"feature used for training: {str(feature)}")
 
         train_data = [t[:-1] for t in self.tmp_features]
         labels = [t[-1] for t in self.tmp_features]
