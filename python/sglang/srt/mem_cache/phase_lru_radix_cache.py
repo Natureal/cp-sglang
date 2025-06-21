@@ -291,9 +291,9 @@ class PhaseLRURadixCache(BasePrefixCache):
         if len(key) == 0:
             return 0
         
-        if finished_req == True:
-            self._predictor_access(node, self.current_ts)
-            self._record_access(node, self.current_ts)
+        #if finished_req == True:
+        #    self._predictor_access(node, self.current_ts)
+        #    self._record_access(node, self.current_ts)
 
         child_key = self.get_child_key_fn(key)
 
@@ -342,9 +342,9 @@ class PhaseLRURadixCache(BasePrefixCache):
             new_node.value = value
 
             self._predictor_spawn(node, new_node)
-            if finished_req == True:
-                self._predictor_access(new_node, self.current_ts)
-                self._record_access(new_node, self.current_ts)
+            #if finished_req == True:
+            #    self._predictor_access(new_node, self.current_ts)
+            #    self._record_access(new_node, self.current_ts)
 
             self._judge_evicted_in_phase(new_node)
 
