@@ -340,9 +340,12 @@ class PhaseLRURadixCache(BasePrefixCache):
             new_node.key_path_len = len(new_node.prefix_key) + len(new_node.key)
             self._generate_node_hash_value(new_node)
             new_node.value = value
-            self._predictor_spawn(node, new_node)
-            # copy ts from parent node when spawning node
-            self._record_access(new_node, node.last_access_ts)
+
+            #self._predictor_spawn(node, new_node)
+            if finished_req == True:
+                self._predictor_access(new_node, self.current_ts)
+                self._record_access(new_node, self.current_ts)
+
             self._judge_evicted_in_phase(new_node)
 
             node.children[child_key] = new_node
