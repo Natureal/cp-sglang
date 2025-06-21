@@ -110,7 +110,7 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
                 self.deltas[i][new_address] = self.deltas[i][address]
             for i in range(0, self.edc_nums):
                 self.edcs[i][new_address] = self.edcs[i][address]
-            self.feature_history[new_address] = [*[self.deltas[i][new_address] for i in range(self.delta_nums)], *[self.edcs[i][new_address] for i in range(self.edc_nums)]]
+            self.feature_history[new_address] = [*[self.deltas[i][new_address] for i in range(self.delta_nums)]] #, *[self.edcs[i][new_address] for i in range(self.edc_nums)]]
 
     def access(self, address, current_ts):
         #logger.info(f"feature num: {len(self.features)}")
@@ -122,10 +122,10 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
             and (self.feature_history[address][0] != np.inf):
             last_access_time = self.access_time_dict[address][-1]
             self.features.append((*self.feature_history[address], current_ts - last_access_time))
+            #self.feature_history[address] = None
             if len(self.features) % 1000 == 0:
                 logger.info(f"current #features: {len(self.features)}")
                 print(f"current #features: {len(self.features)}")
-            #logger.info(f"features: {str((*self.feature_history[address], current_ts - last_access_time))}")
             if len(self.features) > self.training_window:
                 self.features.popleft()
             self.training_accumu_num += 1
@@ -159,7 +159,7 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
             this_edc[address] = 1 + this_edc[address] * 2 ** (-delta1 / (2 ** (9 + i)))
 
         # update feature history right after features updated
-        self.feature_history[address] = [*[self.deltas[i][address] for i in range(self.delta_nums)], *[self.edcs[i][address] for i in range(self.edc_nums)]]
+        self.feature_history[address] = [*[self.deltas[i][address] for i in range(self.delta_nums)]] #, *[self.edcs[i][address] for i in range(self.edc_nums)]]
         # ------------------- update features ends ----------------------------
 
     def predict(self, addresses):
