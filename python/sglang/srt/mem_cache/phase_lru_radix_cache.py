@@ -256,7 +256,7 @@ class PhaseLRURadixCache(BasePrefixCache):
                     new_node.match_tag += 1
                     #print(f"increase tag 2: {new_node.hash_value}, value: {new_node.match_tag}")
 
-                self._record_access(new_node, node.last_access_ts)
+                #self._record_access(new_node, node.last_access_ts)
                 #self._judge_evicted_in_phase(node)
                 #self._judge_evicted_in_phase(new_node)
 
