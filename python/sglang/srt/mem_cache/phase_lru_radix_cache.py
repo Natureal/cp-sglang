@@ -76,6 +76,7 @@ class TreeNode:
         self.pred_valid = 0
         self.access_times = 0
         self.match_tag = 0
+        self.key_path_len = 0
 
         self.prefix_key = None
         self.hash_value = None
@@ -195,6 +196,7 @@ class PhaseLRURadixCache(BasePrefixCache):
     def reset(self):
         self.root_node = TreeNode()
         self.root_node.key = []
+        self.root.key_path_len = 0
         self.root_node.prefix_key = None
         self.root_node.value = []
         self.root_node.lock_ref = 1
@@ -335,6 +337,7 @@ class PhaseLRURadixCache(BasePrefixCache):
                 new_node.prefix_key = node.prefix_key + node.key
             else:
                 new_node.prefix_key = node.key
+            new_node.key_path_len = len(new_node.prefix_key) + len(new_node.key)
             self._generate_node_hash_value(new_node)
             new_node.value = value
             self._predictor_spawn(node, new_node)
@@ -755,6 +758,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         new_node.lock_ref = child.lock_ref
         new_node.key = child.key[:split_len]
         new_node.prefix_key = child.prefix_key # added
+        new_node.key_path_len = len(new_node.prefix_key) + len(new_node.key)
         new_node.match_tag = child.match_tag
         self._generate_node_hash_value(new_node)
         #print(f"original hash v = {hash_value}, new_node hash v = {new_node.hash_value}")
@@ -764,6 +768,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         child.parent = new_node
         child.key = child.key[split_len:]
         child.prefix_key = child.prefix_key + new_node.key
+        child.key_path_len = len(child.prefix_key) + len(child.key)
         self._generate_node_hash_value(child)
         child.value = child.value[split_len:]
         
@@ -792,7 +797,7 @@ class PhaseLRURadixCache(BasePrefixCache):
         if self.degrade_to_lru == True or self.waiting_queue_cache == True:
             return
 
-        self.predictor.access(node.hash_value, current_ts)
+        self.predictor.access(node.hash_value, node.key_path_len, current_ts)
         node.pred_valid = 0
 
     def _predictor_split(self, original_hash, node: TreeNode, new_node: TreeNode):
