@@ -595,7 +595,7 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         for i in range(len(node_to_pred)):
             node = node_to_pred[i]
-            print(f"node key hash = {hash(tuple(node.key))}, hash_value = {node.hash_value}, pred = {node.pred}, truth = {NRT[node.hash_value][0] if len(NRT[node.hash_value]) > 0 else 10000000}")
+            print(f"node, pred = {node.pred}, truth = {NRT[node.hash_value][0] if len(NRT[node.hash_value]) > 0 else 10000000}, features = {self.predictor.get_features(node.hash_value, self.current_ts)}")
 
     def _evict_by_lru(self, num_tokens: int, based_on_budget: bool):
         leaves = self._collect_leaves()

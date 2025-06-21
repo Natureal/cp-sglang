@@ -172,6 +172,10 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
         self.feature_history[address] = [*[self.deltas[i][address] for i in range(self.delta_nums)]] + [key_path_len] #, *[self.edcs[i][address] for i in range(self.edc_nums)]]
         # ------------------- update features ends ----------------------------
 
+    def get_features(self, address, current_ts):
+        last_access_time = self.access_time_dict[address][-1]
+        return (*self.feature_history[address], current_ts - last_access_time, current_ts - last_access_time)
+
     def predict(self, addresses, key_path_lens, current_ts):
         results = []
         invalid_addr = set()
