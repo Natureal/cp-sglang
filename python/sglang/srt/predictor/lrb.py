@@ -168,7 +168,7 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
         self.feature_history[address] = [*[self.deltas[i][address] for i in range(self.delta_nums)]] + [key_path_len] #, *[self.edcs[i][address] for i in range(self.edc_nums)]]
         # ------------------- update features ends ----------------------------
 
-    def predict(self, addresses):
+    def predict(self, addresses, key_path_lens):
         results = []
         invalid_addr = set()
         features = []
@@ -177,7 +177,7 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
                 invalid_addr.add(addresses[k])
                 continue
             #features.append((*[self.deltas[i][addresses[k]] for i in range(self.delta_nums)], *[self.edcs[i][addresses[k]] for i in range(self.edc_nums)]))
-            features.append(tuple([self.deltas[i][addresses[k]] for i in range(self.delta_nums)]))
+            features.append((*[self.deltas[i][addresses[k]] for i in range(self.delta_nums)], key_path_lens[k]))
  
         #logger.info(f"features: {str(features)}")
         preds = []

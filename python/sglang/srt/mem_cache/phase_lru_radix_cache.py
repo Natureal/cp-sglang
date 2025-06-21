@@ -576,13 +576,15 @@ class PhaseLRURadixCache(BasePrefixCache):
 
         node_to_pred = []
         addresses = []
+        key_path_lens = []
         for node in nodes:
             if node.pred_valid == 0:
                 node_to_pred.append(node)
                 addresses.append(node.hash_value)
+                key_path_lens.append(node.key_path_len)
 
         if len(node_to_pred) > 0:
-            preds = self.predictor.predict(addresses)
+            preds = self.predictor.predict(addresses, key_path_lens)
             for i in range(len(node_to_pred)):
                 node = node_to_pred[i]
                 if preds[i] == 2**62:
