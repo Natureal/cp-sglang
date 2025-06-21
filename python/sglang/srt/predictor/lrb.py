@@ -128,6 +128,7 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
             and (self.feature_history[address][0] != np.inf):
             last_access_time = self.access_time_dict[address][-1]
             self.features.append((*self.feature_history[address], current_ts - last_access_time))
+            print(f"feature recorded: {str((*self.feature_history[address], current_ts - last_access_time))}")
             del self.feature_history[address]
             if len(self.features) % 1000 == 0:
                 logger.info(f"current #features: {len(self.features)}")
