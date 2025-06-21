@@ -60,8 +60,8 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
         self.tmp_features = copy.deepcopy(self.features)
         for address in self.feature_history:
             self.tmp_features.append((*self.feature_history[address], 100000000))
-        for feature in self.tmp_features:
-            print(f"feature used for training: {str(feature)}")
+        #for feature in self.tmp_features:
+        #    print(f"feature used for training: {str(feature)}")
 
         train_data = [t[:-1] for t in self.tmp_features]
         labels = [t[-1] for t in self.tmp_features]
