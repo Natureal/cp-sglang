@@ -113,6 +113,8 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
         if address == new_address:
             return
         # copy features from original address
+        if new_address == 1399355274948978823:
+            print(f"address = {address}, addr_access_t = {str(self.access_time_dict[address])}")
         if address in self.access_time_dict:
             self.access_time_dict[new_address] = copy.deepcopy(self.access_time_dict[address])
             for i in range(0, self.delta_nums):
