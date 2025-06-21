@@ -60,6 +60,8 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
         self.tmp_features = copy.deepcopy(self.features)
         for address in self.feature_history:
             self.tmp_features.append((*self.feature_history[address], 100000000))
+        for feature in self.tmp_features:
+            print(f"feature used for training: {str(feature)}")
 
         train_data = [t[:-1] for t in self.tmp_features]
         labels = [t[-1] for t in self.tmp_features]
@@ -128,7 +130,6 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
             and (self.feature_history[address][0] != np.inf):
             last_access_time = self.access_time_dict[address][-1]
             self.features.append((*self.feature_history[address], current_ts - last_access_time))
-            print(f"feature recorded: {str((*self.feature_history[address], current_ts - last_access_time))}")
             del self.feature_history[address]
             if len(self.features) % 1000 == 0:
                 logger.info(f"current #features: {len(self.features)}")
