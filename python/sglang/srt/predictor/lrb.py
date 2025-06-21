@@ -57,11 +57,12 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
         self.belady_value = collections.defaultdict(float)  
 
     def _training_task(self):
+        self.tmp_features = copy.deepcopy(self.features)
         for address in self.feature_history:
-            self.features.append((*self.feature_history[address], 100000000))
+            self.tmp_features.append((*self.feature_history[address], 100000000))
 
-        train_data = [t[:-1] for t in self.features]
-        labels = [t[-1] for t in self.features]
+        train_data = [t[:-1] for t in self.tmp_features]
+        labels = [t[-1] for t in self.tmp_features]
         #for i in range(100):
         #    logger.info(f"training_data: {train_data[i]}, label: {labels[i]}")
         X = np.array(train_data)
