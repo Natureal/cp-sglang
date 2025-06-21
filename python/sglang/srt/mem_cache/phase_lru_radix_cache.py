@@ -196,7 +196,7 @@ class PhaseLRURadixCache(BasePrefixCache):
     def reset(self):
         self.root_node = TreeNode()
         self.root_node.key = []
-        self.root.key_path_len = 0
+        self.root_node.key_path_len = 0
         self.root_node.prefix_key = None
         self.root_node.value = []
         self.root_node.lock_ref = 1
