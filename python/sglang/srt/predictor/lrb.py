@@ -36,8 +36,8 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
 
         self._model = LightGBMModel.from_config(deltanums, edcnums, this_ckpt_path)
         self._model_save_path = this_ckpt_path
-        self.delta_nums = self._model.deltanums
-        self.edc_nums = self._model.edcnums
+        self.delta_nums = 10 # self._model.deltanums
+        self.edc_nums = 10 #self._model.edcnums
         self.memory_window = memory_window
 
         # online training
