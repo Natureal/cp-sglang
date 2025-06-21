@@ -818,8 +818,6 @@ class PhaseLRURadixCache(BasePrefixCache):
     def _predictor_spawn(self, node: TreeNode, new_node: TreeNode):
         if self.degrade_to_lru == True or self.waiting_queue_cache == True:
             return
-        
-        return
 
         self._predictor_feature_copy(node.hash_value, new_node.hash_value)
         # copy pred from parent node
