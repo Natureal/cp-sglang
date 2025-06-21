@@ -59,7 +59,8 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
     def _training_task(self):
         self.tmp_features = copy.deepcopy(self.features)
         for address in self.feature_history:
-            self.tmp_features.append((*self.feature_history[address], 100000000))
+            last_access_time = self.access_time_dict[address][-1]
+            self.tmp_features.append((*self.feature_history[address], self.current_ts - last_access_time, 100000000))
         #for feature in self.tmp_features:
         #    print(f"feature used for training: {str(feature)}")
 
@@ -129,7 +130,7 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
             and (address in self.feature_history) \
             and (self.feature_history[address][0] != np.inf):
             last_access_time = self.access_time_dict[address][-1]
-            self.features.append((*self.feature_history[address], current_ts - last_access_time))
+            self.features.append((*self.feature_history[address], current_ts - last_access_time, current_ts - last_access_time))
             del self.feature_history[address]
             if len(self.features) % 1000 == 0:
                 logger.info(f"current #features: {len(self.features)}")
@@ -141,6 +142,7 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
             if self.training_accumu_num >= self.training_interval:
                 self.training_accumu_num = 0
                 #logger.info(f"current features num: {len(self.features)}, time: {time.time()}")
+                self.current_ts = current_ts
                 asyncio.run(self._online_training())
 
         # ------------------- update features begins ----------------------------
@@ -170,16 +172,16 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
         self.feature_history[address] = [*[self.deltas[i][address] for i in range(self.delta_nums)]] + [key_path_len] #, *[self.edcs[i][address] for i in range(self.edc_nums)]]
         # ------------------- update features ends ----------------------------
 
-    def predict(self, addresses, key_path_lens):
+    def predict(self, addresses, key_path_lens, current_ts):
         results = []
         invalid_addr = set()
         features = []
         for k in range(len(addresses)):
-            if addresses[k] not in self.access_time_dict or len(self.access_time_dict[addresses[k]]) == 1:
+            if addresses[k] not in self.access_time_dict:
                 invalid_addr.add(addresses[k])
                 continue
             #features.append((*[self.deltas[i][addresses[k]] for i in range(self.delta_nums)], *[self.edcs[i][addresses[k]] for i in range(self.edc_nums)]))
-            features.append((*[self.deltas[i][addresses[k]] for i in range(self.delta_nums)], key_path_lens[k]))
+            features.append((*[self.deltas[i][addresses[k]] for i in range(self.delta_nums)], key_path_lens[k], current_ts - self.access_time_dict[addresses[k]][-1]))
  
         #logger.info(f"features: {str(features)}")
         preds = []
