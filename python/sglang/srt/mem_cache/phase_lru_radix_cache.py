@@ -342,10 +342,11 @@ class PhaseLRURadixCache(BasePrefixCache):
             print(f"insert new_node hash v = {new_node.hash_value}")
             new_node.value = value
 
-            self._predictor_spawn(node, new_node)
-            #if finished_req == True:
-            #    self._predictor_access(new_node, self.current_ts)
-            #    self._record_access(new_node, self.current_ts)
+            if node != self.root_node:
+                self._predictor_spawn(node, new_node)
+            elif finished_req == True:
+                self._predictor_access(new_node, self.current_ts)
+                self._record_access(new_node, self.current_ts)
 
             self._judge_evicted_in_phase(new_node)
 
