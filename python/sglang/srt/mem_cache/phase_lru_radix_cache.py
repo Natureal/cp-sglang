@@ -800,6 +800,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             return
 
         self.predictor.access(node.hash_value, node.key_path_len, current_ts)
+        print(f"access, node hash = {node.hash_value}, key_path_len = {node.key_path_len}")
         node.pred_valid = 0
 
     def _predictor_split(self, original_hash, node: TreeNode, new_node: TreeNode):
