@@ -344,6 +344,7 @@ class PhaseLRURadixCache(BasePrefixCache):
 
             if node != self.root_node:
                 self._predictor_spawn(node, new_node)
+                self._record_access(new_node, self.current_ts)
             elif finished_req == True:
                 self._predictor_access(new_node, self.current_ts)
                 self._record_access(new_node, self.current_ts)
