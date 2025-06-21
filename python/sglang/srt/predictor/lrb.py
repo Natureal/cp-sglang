@@ -170,8 +170,9 @@ class LRBReuseDistancePredictor(ReuseDistancePredictor):
             if addresses[k] not in self.access_time_dict or len(self.access_time_dict[addresses[k]]) == 1:
                 invalid_addr.add(addresses[k])
                 continue
-            features.append((*[self.deltas[i][addresses[k]] for i in range(self.delta_nums)])) #, *[self.edcs[i][addresses[k]] for i in range(self.edc_nums)]))
-
+            #features.append((*[self.deltas[i][addresses[k]] for i in range(self.delta_nums)], *[self.edcs[i][addresses[k]] for i in range(self.edc_nums)]))
+            features.append(tuple([self.deltas[i][addresses[k]] for i in range(self.delta_nums)]))
+ 
         #logger.info(f"features: {str(features)}")
         preds = []
         if len(features) > 0:
