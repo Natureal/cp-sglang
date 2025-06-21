@@ -341,7 +341,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             self._generate_node_hash_value(new_node)
             new_node.value = value
 
-            #self._predictor_spawn(node, new_node)
+            self._predictor_spawn(node, new_node)
             if finished_req == True:
                 self._predictor_access(new_node, self.current_ts)
                 self._record_access(new_node, self.current_ts)
@@ -950,13 +950,13 @@ if __name__ == "__main__":
 
     #tree.set_algo_type("phaselru") #popu
     #tree.set_algo_type("lru")
-    #tree.set_algo_type("phaselru")
-    tree.set_algo_type("belady")
+    tree.set_algo_type("phaselru")
+    #tree.set_algo_type("belady")
     #tree.set_algo_type("blindoracle")
 
     json_str = '{"enable_online_training": "on", "training_interval": 5000, "training_window": 100000}'
     obj = json.loads(json_str, object_hook=lambda d: SimpleNamespace(**d))
-    #tree.set_online_training(obj)
+    tree.set_online_training(obj)
 
     #sync_send_req_set = load_multiturn_data(tokenizer)
     #data_type = "multiturn"
