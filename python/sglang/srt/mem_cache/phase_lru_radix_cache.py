@@ -825,7 +825,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             return
 
         if new_node.hash_value == 1399355274948978823:
-            print(f"here: {str(node)}")
+            print(f"here: {str(node.key)}")
         self._predictor_feature_copy(node.hash_value, new_node.hash_value)
         # copy pred from parent node
         new_node.pred_valid = node.pred_valid
