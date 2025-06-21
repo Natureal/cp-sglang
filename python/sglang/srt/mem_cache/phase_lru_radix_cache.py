@@ -593,9 +593,9 @@ class PhaseLRURadixCache(BasePrefixCache):
                     node.pred = node.last_access_ts + preds[i]
                 node.pred_valid = 1
 
-        for i in range(len(node_to_pred)):
-            node = node_to_pred[i]
-            print(f"node, pred = {node.pred}, truth = {NRT[node.hash_value][0] if len(NRT[node.hash_value]) > 0 else 10000000}, features = {self.predictor.get_features(node.hash_value, self.current_ts)}")
+        #for i in range(len(node_to_pred)):
+         #   node = node_to_pred[i]
+          #  print(f"node, pred = {node.pred}, truth = {NRT[node.hash_value][0] if len(NRT[node.hash_value]) > 0 else 10000000}, features = {self.predictor.get_features(node.hash_value, self.current_ts)}")
 
     def _evict_by_lru(self, num_tokens: int, based_on_budget: bool):
         leaves = self._collect_leaves()
@@ -652,7 +652,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             if x.lock_ref > 0:
                 continue
 
-            print(f"current ts = {self.current_ts}, evicted match_tag = {x.match_tag}, pred = {x.pred}, hash_value = {x.hash_value}")
+            print(f"current ts = {self.current_ts}, pred = {x.pred}, truth = {NRT[node.hash_value][0] if len(NRT[node.hash_value]) > 0 else 10000000}, features = {self.predictor.get_features(node.hash_value, self.current_ts)}")
 
             if self.token_to_kv_pool_allocator:
                 self.token_to_kv_pool_allocator.free(x.value)
