@@ -581,10 +581,10 @@ class PhaseLRURadixCache(BasePrefixCache):
         addresses = []
         key_path_lens = []
         for node in nodes:
-            if node.pred_valid == 0:
-                node_to_pred.append(node)
-                addresses.append(node.hash_value)
-                key_path_lens.append(node.key_path_len)
+            #if node.pred_valid == 0:
+            node_to_pred.append(node)
+            addresses.append(node.hash_value)
+            key_path_lens.append(node.key_path_len)
 
         if len(node_to_pred) > 0:
             preds = self.predictor.predict(addresses, key_path_lens, self.current_ts)
@@ -655,7 +655,7 @@ class PhaseLRURadixCache(BasePrefixCache):
             if x.lock_ref > 0:
                 continue
 
-            print(f"current ts = {self.current_ts}, len of key = {len(x.key)}, hash = {x.hash_value}, pred = {x.pred}, truth = {NRT[x.hash_value][0] if len(NRT[x.hash_value]) > 0 else 10000000}, features = {self.predictor.get_features(x.hash_value, self.current_ts)}")
+            print(f"eviction, current ts = {self.current_ts}, len of key = {len(x.key)}, hash = {x.hash_value}, pred = {x.pred}, truth = {NRT[x.hash_value][0] if len(NRT[x.hash_value]) > 0 else 10000000}, features = {self.predictor.get_features(x.hash_value, self.current_ts)}")
 
             if self.token_to_kv_pool_allocator:
                 self.token_to_kv_pool_allocator.free(x.value)
