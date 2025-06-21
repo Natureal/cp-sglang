@@ -950,7 +950,7 @@ if __name__ == "__main__":
     #tree.set_algo_type("belady")
     #tree.set_algo_type("blindoracle")
 
-    json_str = '{"enable_online_training": "on", "training_interval": 100, "training_window": 100000}'
+    json_str = '{"enable_online_training": "on", "training_interval": 5000, "training_window": 100000}'
     obj = json.loads(json_str, object_hook=lambda d: SimpleNamespace(**d))
     tree.set_online_training(obj)
 
