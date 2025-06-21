@@ -1,6 +1,6 @@
 {
-    "delta_nums": 1,
-    "edc_nums": 1,
+    "delta_nums": 10,
+    "edc_nums": 10,
     "training": {
         "objective": "regression",
         "metric": "l2",
