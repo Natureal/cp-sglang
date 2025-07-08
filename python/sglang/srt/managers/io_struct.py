@@ -904,6 +904,15 @@ class OpenSessionReqInput:
 class CloseSessionReqInput:
     session_id: str
 
+@dataclass
+class ConfigureCachingAlgorithmReqInput:
+    algo_type: str
+
+@dataclass
+class ConfigureOnlineTrainingReqInput:
+    enable_online_training: str
+    training_interval: Optional[int] = None
+    training_window: Optional[int] = None
 
 @dataclass
 class OpenSessionReqOutput:

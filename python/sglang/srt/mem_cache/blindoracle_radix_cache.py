@@ -20,20 +20,33 @@ The radix tree data structure for managing the KV cache.
 """
 
 import heapq
+import io
+import sys
 import time
+import logging
 from collections import defaultdict
 from functools import partial
 from typing import TYPE_CHECKING, List, Optional, Tuple
 
 import torch
 
+from sglang.srt.disaggregation.kv_events import (
+    AllBlocksCleared,
+    BlockRemoved,
+    BlockStored,
+    KVCacheEvent,
+)
 from sglang.srt.managers.schedule_batch import global_server_args_dict
 from sglang.srt.mem_cache.base_prefix_cache import BasePrefixCache
 from sglang.srt.mem_cache.memory_pool import ReqToTokenPool, TokenToKVPoolAllocator
+from sglang.srt.predictor.pleco import PLECOPredictor
+from sglang.srt.predictor.popu import POPUPredictor, LRUPredictor
+from sglang.srt.predictor.lrb import LRBReuseDistancePredictor
 
 if TYPE_CHECKING:
     from sglang.srt.managers.schedule_batch import Req
 
+logger = logging.getLogger(__name__)
 
 class TreeNode:
 
@@ -45,7 +58,11 @@ class TreeNode:
         self.key = None
         self.value = None
         self.lock_ref = 0
-        self.last_access_time = time.monotonic()
+        self.last_access_ts = 0
+        self.pred = 0
+        self.pred_valid = 0
+
+        self.degrade_to_lru = False
 
         self.hit_count = 0
         # indicating the node is loading KV cache from host
@@ -63,9 +80,9 @@ class TreeNode:
     @property
     def backuped(self):
         return self.host_value is not None
-
+    
     def __lt__(self, other: "TreeNode"):
-        return self.last_access_time < other.last_access_time
+        return self.pred > other.pred
 
 
 def _key_match_page_size1(key0: List, key1: List):
@@ -89,19 +106,25 @@ def _key_match_paged(key0: List, key1: List, page_size: int):
     return i
 
 
-class RadixCache(BasePrefixCache):
+class BlindOracleRadixCache(BasePrefixCache):
     def __init__(
         self,
         req_to_token_pool: ReqToTokenPool,
         token_to_kv_pool_allocator: TokenToKVPoolAllocator,
         page_size: int,
         disable: bool = False,
-        waiting_queue_cache: bool = False
+        waiting_queue_cache: bool = False,
     ):
         self.req_to_token_pool = req_to_token_pool
         self.token_to_kv_pool_allocator = token_to_kv_pool_allocator
         self.page_size = page_size
         self.disable = disable
+        #self.predictor = POPUPredictor()
+        #self.predictor = LRUPredictor()
+        #self.predictor = PLECOPredictor()
+        self.predictor = LRBReuseDistancePredictor()
+
+        self.current_ts = 0
 
         if self.token_to_kv_pool_allocator:
             self.device = self.token_to_kv_pool_allocator.device
@@ -156,15 +179,20 @@ class RadixCache(BasePrefixCache):
             value = torch.cat(value)
         else:
             value = torch.empty((0,), dtype=torch.int64, device=self.device)
+
         return value, last_node
 
-    def insert(self, key: List, value=None):
+    def insert(self, key: List, value=None, finished_req = False):
         if self.disable:
             return 0
+        
+        # increase ts whenever a new request processed
+        if finished_req == True:
+            self.current_ts += 1
 
         if value is None:
             value = [x for x in key]
-        return self._insert_helper(self.root_node, key, value)
+        return self._insert_helper(self.root_node, key, value, finished_req)
 
     def cache_finished_req(self, req: Req):
         """Cache request when it finishes."""
@@ -190,8 +218,8 @@ class RadixCache(BasePrefixCache):
             page_aligned_kv_indices = kv_indices.clone()
 
         # Radix Cache takes one ref in memory pool
-        new_prefix_len = self.insert(
-            token_ids[:page_aligned_len], page_aligned_kv_indices
+        new_prefix_len = self.insert( 
+            token_ids[:page_aligned_len], page_aligned_kv_indices, True
         )
         self.token_to_kv_pool_allocator.free(
             kv_indices[len(req.prefix_indices) : new_prefix_len]
@@ -251,14 +279,27 @@ class RadixCache(BasePrefixCache):
     def total_size(self):
         return self._total_size_helper()
 
+    def _predict(self, nodes: List[TreeNode]):
+        for node in nodes:
+            if node.pred_valid == 0:
+                pred_result = self.predictor.predict(hash(tuple(node.key)))
+                if pred_result == 2**62:
+                    node.pred = pred_result - node.last_access_ts
+                else:
+                    node.pred = pred_result + node.last_access_ts
+                #node.pred = node.last_access_ts
+                node.pred_valid = 1
+
     def evict(self, num_tokens: int):
         if self.disable:
             return
         
         self.token_to_kv_pool_allocator.record_eviction(num_tokens)
-        leaves = self._collect_leaves()
-        heapq.heapify(leaves)
 
+        leaves = self._collect_leaves()
+        self._predict(leaves)
+        heapq.heapify(leaves)
+        
         num_evicted = 0
         while num_evicted < num_tokens and len(leaves):
             x = heapq.heappop(leaves)
@@ -274,6 +315,27 @@ class RadixCache(BasePrefixCache):
 
             if len(x.parent.children) == 0:
                 heapq.heappush(leaves, x.parent)
+
+        # while num_evicted < num_tokens and len(leaves):
+        #     x = heapq.heappop(leaves)
+
+        #     if x == self.root_node:
+        #         break
+        #     if x.lock_ref > 0:
+        #         continue
+            
+        #     if num_evicted + len(x.value) > num_tokens:
+        #         num_to_evict = num_tokens - num_evicted
+        #         original_key = x.key
+        #         new_node = self._split_node(x.key, x, len(x.value) - num_to_evict)
+        #         self._split_predictor_copy(original_key, x, new_node)
+
+        #     num_evicted += len(x.value)
+        #     self.token_to_kv_pool_allocator.free(x.value)
+        #     self._delete_leaf(x)
+
+        #     if len(x.parent.children) == 0:
+        #         heapq.heappush(leaves, x.parent)
 
     def inc_lock_ref(self, node: TreeNode):
         if self.disable:
@@ -324,17 +386,19 @@ class RadixCache(BasePrefixCache):
     ##### Internal Helper Functions #####
 
     def _match_prefix_helper(self, node: TreeNode, key: List):
-        node.last_access_time = time.monotonic()
-
         child_key = self.get_child_key_fn(key)
-
+        
         value = []
         while len(key) > 0 and child_key in node.children.keys():
             child = node.children[child_key]
-            child.last_access_time = time.monotonic()
             prefix_len = self.key_match_fn(child.key, key)
             if prefix_len < len(child.key):
+                original_key = child.key
                 new_node = self._split_node(child.key, child, prefix_len)
+                self._predictor_split(original_key, node, new_node)
+                # copy ts from node when splitting node
+                new_node.last_access_ts = node.last_access_ts
+
                 value.append(new_node.value)
                 node = new_node
                 break
@@ -362,25 +426,67 @@ class RadixCache(BasePrefixCache):
         new_node.parent.children[self.get_child_key_fn(key)] = new_node
 
         return new_node
+    
+    def _predictor_access(self, node: TreeNode, current_ts):
+        self.predictor.access(hash(tuple(node.key)), current_ts)
+        #if node.pred_valid == 1:
+         #   logger.info(f"node pred = {node.pred}, truth = {self.current_ts}, interval = {self.current_ts - node.last_access_ts}, node key = {hash(tuple(node.key))}")
+        node.pred_valid = 0
 
-    def _insert_helper(self, node: TreeNode, key: List, value):
-        node.last_access_time = time.monotonic()
+        #logger.info(f"current ts: {self.current_ts}")
+        #if self.current_ts % 100 == 0:
+        #    captured = self._capture_print()
+        #    logger.info(f"---------------------------------------------------- tree structure: {captured}")
+
+    def _predictor_split(self, original_key, node: TreeNode, new_node: TreeNode):
+        self._predictor_feature_copy(original_key, node.key)
+        self._predictor_feature_copy(original_key, new_node.key)
+        # copy pred from original node
+        new_node.pred_valid = node.pred_valid
+        new_node.pred = node.pred
+
+    def _predictor_feature_copy(self, key, new_key):
+        self.predictor.feature_copy(hash(tuple(key)), hash(tuple(new_key)))
+
+    def _predictor_spawn(self, node: TreeNode, new_node: TreeNode):
+        #self._predictor_feature_copy(node.key, new_node.key)
+        # copy pred from parent node
+        #new_node.pred_valid = node.pred_valid
+        #new_node.pred = node.pred
+        pass
+
+    def _insert_helper(self, node: TreeNode, key: List, value, finished_req):
         if len(key) == 0:
             return 0
+        # update ts and features only when the request is finished
+        if finished_req == True:
+            self._predictor_access(node, self.current_ts)
+            node.last_access_ts = self.current_ts
+            #logger.info(f"insert : {str(key)}")
 
         child_key = self.get_child_key_fn(key)
 
         total_prefix_length = 0
         while len(key) > 0 and child_key in node.children.keys():
             node = node.children[child_key]
-            node.last_access_time = time.monotonic()
+            if finished_req == True:
+                self._predictor_access(node, self.current_ts)
+                node.last_access_ts = self.current_ts
+                #logger.info(f"insert : {str(key)}")
+            
             prefix_len = self.key_match_fn(node.key, key)
             total_prefix_length += prefix_len
             key = key[prefix_len:]
             value = value[prefix_len:]
 
             if prefix_len < len(node.key):
+                original_key = node.key
+                #logger.info(f"insert : {str(key)}")
                 new_node = self._split_node(node.key, node, prefix_len)
+                self._predictor_split(original_key, node, new_node)
+
+                # copy ts from node when splitting node
+                new_node.last_access_ts = node.last_access_ts
                 node = new_node
 
             if len(key):
@@ -391,12 +497,22 @@ class RadixCache(BasePrefixCache):
             new_node.parent = node
             new_node.key = key
             new_node.value = value
+            self._predictor_spawn(node, new_node)
+            # copy ts from parent node when spawning node
+            new_node.last_access_ts = node.last_access_ts
             node.children[child_key] = new_node
             self.evictable_size_ += len(value)
 
         if self.token_to_kv_pool_allocator:
             self.token_to_kv_pool_allocator.evictable_size = self.evictable_size_
         return total_prefix_length
+    
+    def _capture_print(self):
+        buffer = io.StringIO()
+        sys.stdout = buffer
+        self.pretty_print()
+        sys.stdout = sys.__stdout__
+        return buffer.getvalue()
 
     def _print_helper(self, node: TreeNode, indent: int):
         """Prints the radix tree in a human-readable format."""
@@ -404,10 +520,10 @@ class RadixCache(BasePrefixCache):
         while stack:
             current_node, current_indent = stack.pop()
             print(
-                " " * current_indent,
-                len(current_node.key),
-                current_node.key[:10],
-                f"r={current_node.lock_ref}",
+                "--" * current_indent,
+                f"node_id ({current_node.id}), depth ({current_indent / 2}), #keys {len(current_node.key)}",
+                #current_node.key[:10],
+                #f"r={current_node.lock_ref}",
             )
             for key, child in current_node.children.items():
                 stack.append((child, current_indent + 2))
@@ -449,7 +565,7 @@ class RadixCache(BasePrefixCache):
         return ret_list
 
 if __name__ == "__main__":
-    tree = RadixCache(None, None, page_size=1, disable=False)
+    tree = BlindOracleRadixCache(None, None, page_size=1, disable=False)
 
     tree.insert("Hello")
     tree.insert("Hello")

@@ -957,16 +957,15 @@ def gen_prompt(tokenizer, token_num):
 
 def get_gen_prefix_cache_path(args, tokenizer):
     """Create cache directory under ~/.cache/sglang/benchmark"""
-    cache_dir = Path.home() / ".cache" / "sglang" / "benchmark"
+    #cache_dir = Path.home() / ".cache" / "sglang" / "benchmark"
+    cache_dir = "/home/relay/chenpeng12/Experiments"
 
     # Create a unique cache filename based on the generation parameters
-    cache_key = (
-        f"gen_shared_prefix_{args.gsp_num_groups}_{args.gsp_prompts_per_group}_"
-        f"{args.gsp_system_prompt_len}_{args.gsp_question_len}_{args.gsp_output_len}_"
-        f"{tokenizer.__class__.__name__}.pkl"
-    )
-    return cache_dir / cache_key
-
+    cache_path =f"{cache_dir}/gen_prefix_{args.gsp_num_groups}_{args.gsp_prompts_per_group}_ \
+            {args.gsp_system_prompt_len}_{args.gsp_question_len}_{args.gsp_output_len}_ \
+            {tokenizer.__class__.__name__}.pkl"
+    
+    return Path(cache_path)
 
 def sample_generated_shared_prefix_requests(
     num_groups: int,

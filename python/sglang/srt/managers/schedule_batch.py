@@ -637,7 +637,7 @@ class Req:
                 )
             else:
                 self.prefix_indices, self.last_node = tree_cache.match_prefix(
-                    rid=self.rid, key=self.adjust_max_prefix_ids()
+                    rid=self.rid, key=self.adjust_max_prefix_ids(), init_req=True
                 )
         elif enable_hierarchical_cache:
             # in case last_node is evicted during scheduling, we need to update the prefix_indices
@@ -927,7 +927,7 @@ class ScheduleBatch(ScheduleBatchDisaggregationDecodeMixin):
     def alloc_token_slots(self, num_tokens: int, backup_state: bool = False):
         if self.token_to_kv_pool_allocator.available_size() < num_tokens:
             if self.tree_cache is not None:
-                self.tree_cache.evict(num_tokens)
+                self.tree_cache.evict(num_tokens - self.token_to_kv_pool_allocator.available_size())
 
         if backup_state:
             state = self.token_to_kv_pool_allocator.backup_state()
@@ -938,7 +938,8 @@ class ScheduleBatch(ScheduleBatchDisaggregationDecodeMixin):
             error_msg = (
                 f"{phase_str} out of memory. Try to lower your batch size.\n"
                 f"Try to allocate {num_tokens} tokens.\n"
-                f"Available tokens: {self.token_to_kv_pool_allocator.available_size() + self.tree_cache.evictable_size()}\n"
+                f"Available size: {self.token_to_kv_pool_allocator.available_size()} tokens.\n"
+                f"Evitable tokens: {self.tree_cache.evictable_size()}\n"
             )
             logger.error(error_msg)
             if self.tree_cache is not None:
@@ -966,7 +967,8 @@ class ScheduleBatch(ScheduleBatchDisaggregationDecodeMixin):
             if self.tree_cache is not None:
                 self.tree_cache.evict(
                     extend_num_tokens
-                    + len(seq_lens) * self.token_to_kv_pool_allocator.page_size,
+                    + len(seq_lens) * self.token_to_kv_pool_allocator.page_size
+                    - self.token_to_kv_pool_allocator.available_size()
                 )
 
         if backup_state:
@@ -1003,7 +1005,8 @@ class ScheduleBatch(ScheduleBatchDisaggregationDecodeMixin):
                 < len(seq_lens) * self.token_to_kv_pool_allocator.page_size
             ):
                 self.tree_cache.evict(
-                    len(seq_lens) * self.token_to_kv_pool_allocator.page_size,
+                    len(seq_lens) * self.token_to_kv_pool_allocator.page_size
+                    - self.token_to_kv_pool_allocator.available_size()
                 )
 
         if backup_state:
@@ -1328,7 +1331,7 @@ class ScheduleBatch(ScheduleBatchDisaggregationDecodeMixin):
         if self.token_to_kv_pool_allocator.available_size() >= tokens_required:
             return True
 
-        self.tree_cache.evict(tokens_required)
+        self.tree_cache.evict(tokens_required - self.token_to_kv_pool_allocator.available_size())
 
         return self.token_to_kv_pool_allocator.available_size() >= tokens_required
 
